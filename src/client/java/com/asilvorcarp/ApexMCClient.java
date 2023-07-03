@@ -1,11 +1,12 @@
 package com.asilvorcarp;
 
+import fi.dy.masa.malilib.event.InitializationHandler;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
@@ -36,57 +37,68 @@ public class ApexMCClient implements ClientModInitializer {
                 "category.apex_mc.apex" // The translation key of the keybinding's category.
         ));
 
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (pingKeyBinding.wasPressed()) {
-                System.out.println("pressed ping key");
+        InitializationHandler.getInstance().registerInitializationHandler(new InitHandler());
 
-                Text mes = Text.literal("Mozambique here!");
-                assert client.player != null;
-                var player = client.player;
-                player.sendMessage(mes, false);
+        ClientTickEvents.END_CLIENT_TICK.register(ApexMCClient::checkKeyPress);
+    }
 
-                // FIXME: play sound
-                var world = client.world;
-                assert world != null;
-                BlockPos soundPos = player.getBlockPos();
-                System.out.println(soundPos);
-                world.playSound(
-                        null, // Player - if non-null, will play sound for every nearby player *except* the specified player
-                        soundPos, // The position of where the sound will come from
-                        SoundEvents.BLOCK_ANVIL_BREAK, // The sound that will play, in this case, the sound the anvil plays when it lands.
-                        SoundCategory.BLOCKS, // This determines which of the volume sliders affect this sound
-                        1f, // Volume multiplier, 1 is normal, 0.5 is half volume, etc
-                        1f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
-                );
+    private static void checkKeyPress(MinecraftClient client) {
+        while (pingKeyBinding.wasPressed()) {
+            System.out.println("pressed ping key");
 
-                // get the targeted block
+            Text mes = Text.literal("Mozambique here!");
+            assert client.player != null;
+            var player = client.player;
+            player.sendMessage(mes, false);
 
-                float tickDelta = 1.0f; // TODO test this
-                assert client.cameraEntity != null;
-                Vec3d cameraDirection = client.cameraEntity.getRotationVec(tickDelta);
+            // FIXME: play sound
+            var world = client.world;
+            assert world != null;
+            BlockPos soundPos = player.getBlockPos();
+            System.out.println(soundPos);
+            world.playSound(
+                    null, // Player - if non-null, will play sound for every nearby player *except* the specified player
+                    soundPos, // The position of where the sound will come from
+                    SoundEvents.BLOCK_ANVIL_BREAK, // The sound that will play, in this case, the sound the anvil plays when it lands.
+                    SoundCategory.BLOCKS, // This determines which of the volume sliders affect this sound
+                    1f, // Volume multiplier, 1 is normal, 0.5 is half volume, etc
+                    1f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
+            );
 
-                HitResult hit = raycast(client.cameraEntity, MAX_REACH, tickDelta, false, cameraDirection);
-                // HitResult hit = client.crosshairTarget;
+            // get the targeted block
 
-                switch (Objects.requireNonNull(hit).getType()) {
-                    case MISS -> player.sendMessage(Text.literal("Too far"), true);
-                    case BLOCK -> {
-                        BlockHitResult blockHit = (BlockHitResult) hit;
-                        BlockPos blockPos = blockHit.getBlockPos();
-                        BlockState blockState = client.world.getBlockState(blockPos);
-                        Block block = blockState.getBlock();
-                        final Text blockMes = block.getName();
-                        player.sendMessage(blockMes, true);
-                    }
-                    case ENTITY -> {
-                        EntityHitResult entityHit = (EntityHitResult) hit;
-                        Entity entity = entityHit.getEntity();
-                        final Text entityMes = entity.getName();
-                        player.sendMessage(entityMes, true);
-                    }
+            float tickDelta = 1.0f; // TODO test this
+            assert client.cameraEntity != null;
+            Vec3d cameraDirection = client.cameraEntity.getRotationVec(tickDelta);
+
+            HitResult hit = raycast(client.cameraEntity, MAX_REACH, tickDelta, false, cameraDirection);
+            // HitResult hit = client.crosshairTarget;
+
+            BlockPos pingPos = null;
+            switch (Objects.requireNonNull(hit).getType()) {
+                case MISS -> player.sendMessage(Text.literal("Too far"), true);
+                case BLOCK -> {
+                    BlockHitResult blockHit = (BlockHitResult) hit;
+                    BlockPos blockPos = blockHit.getBlockPos();
+                    BlockState blockState = client.world.getBlockState(blockPos);
+                    Block block = blockState.getBlock();
+                    final Text blockMes = block.getName();
+                    player.sendMessage(blockMes, true);
+                    pingPos = blockPos;
+                }
+                case ENTITY -> {
+                    EntityHitResult entityHit = (EntityHitResult) hit;
+                    Entity entity = entityHit.getEntity();
+                    final Text entityMes = entity.getName();
+                    player.sendMessage(entityMes, true);
+                    pingPos = entity.getBlockPos();
                 }
             }
-        });
+
+            if (pingPos != null) {
+
+            }
+        }
     }
 
     private static HitResult raycast(
