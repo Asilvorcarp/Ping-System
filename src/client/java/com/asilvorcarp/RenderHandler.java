@@ -12,8 +12,10 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
-import org.joml.Matrix4f;
+import org.jetbrains.annotations.NotNull;
+import org.joml.*;
 
+import java.lang.Math;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,12 +54,115 @@ public class RenderHandler implements IRenderer {
         }
     }
 
+    public static Quaternionf getDegreesQuaternion(Vector3f vector, float degrees) {
+        return new Quaternionf().fromAxisAngleDeg(vector, degrees);
+    }
+
+    private static Vec3d map(double anglePerPixel, Vec3d cameraDir, Vector3f horizontalRotationAxis,
+                             Vector3f verticalRotationAxis, int x, int y, int width, int height) {
+        float horizontalRotation = (float) ((x - width / 2f) * anglePerPixel);
+        float verticalRotation = (float) ((y - height / 2f) * anglePerPixel);
+
+        final Vector3f temp2 = Vec3dToV3f(cameraDir);
+        Quaternionfc rot1 = getDegreesQuaternion(verticalRotationAxis, verticalRotation);
+        Quaternionfc rot2 = getDegreesQuaternion(horizontalRotationAxis, horizontalRotation);
+        temp2.rotate(rot1);
+        temp2.rotate(rot2);
+        return new Vec3d(temp2);
+    }
+
+    private static Vector2d mapBack(double anglePerPixel, Vec3d cameraDir, Vector3f horizontalRotationAxis,
+                                    Vector3f verticalRotationAxis, Vec3d targetDir, int width, int height) {
+        // TODO implement
+        return new Vector2d(10, 10);
+    }
+
+    private static Vector3f Vec3dToV3f(Vec3d v) {
+        var ret = new Vector3f();
+        ret.x = (float) v.x;
+        ret.y = (float) v.y;
+        ret.z = (float) v.z;
+        return ret;
+    }
+
     @Override
     public void onRenderGameOverlayPost(DrawContext drawContext) {
         for (var ping : this.pings.values()) {
             // TODO get cx cy on camera
-            renderIconHUD(0, 0, ping);
+
+            MinecraftClient client = MinecraftClient.getInstance();
+            int width = client.getWindow().getScaledWidth();
+            int height = client.getWindow().getScaledHeight();
+            assert client.cameraEntity != null;
+            Vec3d cameraPos = client.cameraEntity.getPos();
+            Vec3d targetDir = ping.pos.subtract(cameraPos);
+            Vec3d cameraDirection = client.cameraEntity.getRotationVec(1.0f);
+            double fov = client.options.getFov().getValue();
+            double angleSize = fov / height;
+
+            Vector2d v2 = getIconCenter2(width, height, targetDir, cameraDirection, angleSize);
+//            System.out.println(v2);
+
+            renderIconHUD((int) v2.x, (int) v2.y, ping);
         }
+    }
+
+    @NotNull
+    private Vector2d getIconCenter(int width, int height, Vec3d targetDir, Vec3d cameraDirection, double angleSize) {
+        Vector3f verticalRotationAxis = Vec3dToV3f(cameraDirection);
+        verticalRotationAxis.cross(new Vector3f(0, 1, 0));
+        verticalRotationAxis.normalize();
+        Vector3f horizontalRotationAxis = Vec3dToV3f(cameraDirection);
+        horizontalRotationAxis.cross(verticalRotationAxis);
+        horizontalRotationAxis.normalize();
+        verticalRotationAxis = Vec3dToV3f(cameraDirection);
+        verticalRotationAxis.cross(horizontalRotationAxis);
+
+        var v2 = mapBack(angleSize, cameraDirection, horizontalRotationAxis, verticalRotationAxis,
+                targetDir, width, height);
+        return v2;
+    }
+
+    private Vector2d getIconCenter2(int width, int height, Vec3d targetDir, Vec3d cameraDirection, double angleSize) {
+        Vector3f verticalRotationAxis = Vec3dToV3f(cameraDirection);
+        verticalRotationAxis.cross(new Vector3f(0, 1, 0));
+        verticalRotationAxis.normalize();
+        Vector3f horizontalRotationAxis = Vec3dToV3f(cameraDirection);
+        horizontalRotationAxis.cross(verticalRotationAxis);
+        horizontalRotationAxis.normalize();
+        verticalRotationAxis = Vec3dToV3f(cameraDirection);
+        verticalRotationAxis.cross(horizontalRotationAxis);
+        cameraDirection.normalize();
+
+        Vector2d ret = new Vector2d(10, 10);
+        double minTheta = 90;
+
+        // FIXME!!! need to abandon this bad idea
+        outerLoop:
+        for (int x = 0; x < width; x += 4) {
+            for (int y = 0; y < height; y += 4) {
+                Vec3d tarHat = map(angleSize, cameraDirection, horizontalRotationAxis, verticalRotationAxis, x, y, width, height).normalize();
+                var theta = Math.acos(tarHat.dotProduct(targetDir) / (tarHat.length() * targetDir.length()));
+                theta = Math.toDegrees(theta);
+                if (theta < minTheta) {
+                    minTheta = theta;
+                    ret.x = x;
+                    ret.y = y;
+                }
+                if (theta <= 1) {
+                    break outerLoop;
+                }
+            }
+        }
+
+//        System.out.println(ret);
+
+//        Vec3d tarHat1 = map(angleSize, cameraDirection, horizontalRotationAxis, verticalRotationAxis, 0, 0, width, height);
+//        Vec3d tarHat2 = map(angleSize, cameraDirection, horizontalRotationAxis, verticalRotationAxis, width / 2, height / 2, width, height);
+//        System.out.println(tarHat1);
+//        System.out.println(tarHat2);
+
+        return ret;
     }
 
     /**
