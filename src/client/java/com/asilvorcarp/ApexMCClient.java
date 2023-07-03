@@ -120,5 +120,4 @@ public class ApexMCClient implements ClientModInitializer {
                 entity
         ));
     }
-
 }
