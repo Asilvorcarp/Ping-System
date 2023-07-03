@@ -1,31 +1,31 @@
 {
 	"schemaVersion": 1,
-	"id": "modid",
+	"id": "apex_mc",
 	"version": "${version}",
-	"name": "Example mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "Apex MC",
+	"description": "Make MC Apex Again!",
 	"authors": [
-		"Me!"
+		"Asilvorcarp"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/Asilvorcarp/ApexMC",
+		"sources": "https://github.com/Asilvorcarp/ApexMC"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/modid/icon.png",
+	"icon": "assets/apex_mc/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.example.ExampleMod"
+			"com.asilvorcarp.ApexMC"
 		],
 		"client": [
-			"com.example.ExampleModClient"
+			"com.asilvorcarp.ApexMCClient"
 		]
 	},
 	"mixins": [
-		"modid.mixins.json",
+		"apex_mc.mixins.json",
 		{
-			"config": "modid.client.mixins.json",
+			"config": "apex_mc.client.mixins.json",
 			"environment": "client"
 		}
 	],
@@ -33,7 +33,8 @@
 		"fabricloader": ">=0.14.21",
 		"minecraft": "~1.20.1",
 		"java": ">=17",
-		"fabric-api": "*"
+		"fabric-api": "*",
+		"fabric-key-binding-api-v1": "*"
 	},
 	"suggests": {
 		"another-mod": "*"
