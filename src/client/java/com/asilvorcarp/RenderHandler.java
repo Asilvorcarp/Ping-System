@@ -9,21 +9,38 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
+import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RenderHandler implements IRenderer {
     private static final RenderHandler INSTANCE = new RenderHandler();
     private final MinecraftClient mc;
     public int debug_count;
+    public Map<String, PingPoint> pings;
+    public boolean singlePingEach;
 
     public RenderHandler() {
         this.mc = MinecraftClient.getInstance();
         this.debug_count = 0;
+        this.pings = new HashMap<>();
+        this.singlePingEach = true;
     }
 
     public static RenderHandler getInstance() {
         return INSTANCE;
+    }
+
+    public void setPing(PingPoint p) {
+        if (singlePingEach){
+            pings.put(p.owner, p);
+        } else {
+            // TODO (later)
+        }
     }
 
     @Override
@@ -40,14 +57,14 @@ public class RenderHandler implements IRenderer {
             return;
         }
 
-        mc.getProfiler().push(() -> "BeaconRangeHeldItem");
-        renderBeaconBoxForPlayer(entity, mc);
-        mc.getProfiler().pop();
+        for (var ping : this.pings.values()) {
+            highlightPing(ping, mc);
+        }
 
-        this.render(entity, matrixStack, projMatrix, mc);
+//        this.render(entity, matrixStack, projMatrix, mc);
     }
 
-    public void render(Entity entity, MatrixStack matrixStack, Matrix4f projMatrix, MinecraftClient mc) {
+//    public void render(Entity entity, MatrixStack matrixStack, Matrix4f projMatrix, MinecraftClient mc) {
 //        Vec3d cameraPos = mc.gameRenderer.getCamera().getPos();
 //        this.update(cameraPos, entity, mc);
 //        this.draw(cameraPos, matrixStack, projMatrix, mc);
@@ -57,33 +74,24 @@ public class RenderHandler implements IRenderer {
 //            System.out.println("{{ Render!");
 //            debug_count=0;
 //        }
+//    }
 
-        renderBeaconBoxForPlayer(entity, mc);
-    }
-
-    private static void renderBeaconBoxForPlayer(Entity entity, MinecraftClient mc) {
-        // 83 63 -81
+    private static void highlightPing(PingPoint ping, MinecraftClient mc) {
+        // TODO show owner name
         Vec3d cameraPos = mc.gameRenderer.getCamera().getPos();
-//        var enX = entity.getX();
-//        var enY = entity.getY();
-//        var enZ = entity.getZ();
-        double enX = 83.0, enY = 63.0, enZ = -81.0;
-        double x = Math.floor(enX) - cameraPos.x;
-        double y = Math.floor(enY) - cameraPos.y;
-        double z = Math.floor(enZ) - cameraPos.z;
-        // Use the slot number as the level if sneaking
+        double x = ping.pos.x - cameraPos.x;
+        double y = ping.pos.y - cameraPos.y;
+        double z = ping.pos.z - cameraPos.z;
+
         assert mc.player != null;
-//        int level = mc.player.isSneaking() ? Math.min(4, mc.player.getInventory().selectedSlot + 1) : 4;
-//        double range = level * 10 + 10;
-        double range = 0;
-        double minX = x - range;
-        double minY = y - range;
-        double minZ = z - range;
-        double maxX = x + range + 1;
-        double maxY = y + range + 1;
-        double maxZ = z + range + 1;
-//        Color4f color = OverlayRendererBeaconRange.getColorForLevel(level);
-        Color4f color = new Color4f(247, 175, 53);
+        double size = 0.3;
+        double minX = x - size / 2;
+        double minY = y - size / 2;
+        double minZ = z - size / 2;
+        double maxX = x + size / 2;
+        double maxY = y + size / 2;
+        double maxZ = z + size / 2;
+        Color4f color = ping.color;
 
         RenderSystem.disableCull();
         RenderSystem.enableDepthTest();

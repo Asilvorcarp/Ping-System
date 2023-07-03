@@ -24,7 +24,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.Objects;
 
 public class ApexMCClient implements ClientModInitializer {
-    public static final double MAX_REACH = 50.0D;
+    public static final double MAX_REACH = 256.0D;
     private static KeyBinding pingKeyBinding;
 
     @Override
@@ -74,7 +74,7 @@ public class ApexMCClient implements ClientModInitializer {
             HitResult hit = raycast(client.cameraEntity, MAX_REACH, tickDelta, false, cameraDirection);
             // HitResult hit = client.crosshairTarget;
 
-            BlockPos pingPos = null;
+            Vec3d pingPos = null;
             switch (Objects.requireNonNull(hit).getType()) {
                 case MISS -> player.sendMessage(Text.literal("Too far"), true);
                 case BLOCK -> {
@@ -84,20 +84,23 @@ public class ApexMCClient implements ClientModInitializer {
                     Block block = blockState.getBlock();
                     final Text blockMes = block.getName();
                     player.sendMessage(blockMes, true);
-                    pingPos = blockPos;
+                    pingPos = hit.getPos();
                 }
                 case ENTITY -> {
                     EntityHitResult entityHit = (EntityHitResult) hit;
                     Entity entity = entityHit.getEntity();
                     final Text entityMes = entity.getName();
                     player.sendMessage(entityMes, true);
-                    pingPos = entity.getBlockPos();
+                    pingPos = hit.getPos();
                 }
             }
+            System.out.println("Ping at");
+            System.out.println(pingPos);
 
             if (pingPos != null) {
-
+                RenderHandler.getInstance().setPing(new PingPoint(pingPos, player.getEntityName()));
             }
+
         }
     }
 
