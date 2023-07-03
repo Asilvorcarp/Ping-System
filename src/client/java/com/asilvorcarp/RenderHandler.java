@@ -54,10 +54,25 @@ public class RenderHandler implements IRenderer {
 
     @Override
     public void onRenderGameOverlayPost(DrawContext drawContext) {
-        int winWidth = mc.getWindow().getScaledWidth();
-        int winHeight = mc.getWindow().getScaledHeight();
-        int x = winWidth / 4;
-        int y = winHeight / 4;
+        for (var ping : this.pings.values()) {
+            // TODO get cx cy on camera
+            renderIconHUD(0, 0, ping);
+        }
+    }
+
+    /**
+     * cx, cy: center of the icon
+     * ping: the PingPoint
+     */
+    private void renderIconHUD(int cx, int cy, PingPoint ping) {
+        // TODO show distance and owner
+        double zLevel = 0;
+        var realResizer = ICON_RESIZER / 32;
+        float u = 0, v = 0, width = 256 * realResizer, height = 256 * realResizer;
+        float pixelWidth = 0.00390625F / realResizer;
+
+        int x = (int) (cx - width / 2);
+        int y = (int) (cy - height / 2);
 
         INSTANCE.debug_count++;
         if (INSTANCE.debug_count >= 160) {
@@ -67,29 +82,25 @@ public class RenderHandler implements IRenderer {
             System.out.println(y);
         }
 
-        for (var ping : this.pings.values()) {
-            RenderUtils.bindTexture(PING_BASIC);
+        // TODO add background
+        RenderUtils.bindTexture(PING_BASIC);
 
 //            RenderUtils.drawTexturedRect(0, 0, 0, 0, 128, 128);
-            double zLevel = 0;
-            var realResizer = ICON_RESIZER / 32;
-            float u = 0, v = 0, width = 256 * realResizer, height = 256 * realResizer;
-            float pixelWidth = 0.00390625F / realResizer;
-            RenderSystem.setShader(GameRenderer::getPositionTexProgram);
-            RenderSystem.applyModelViewMatrix();
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
 
-            RenderUtils.setupBlend();
-            buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+        RenderSystem.applyModelViewMatrix();
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
 
-            buffer.vertex(x, y + height, zLevel).texture(u * pixelWidth, (v + height) * pixelWidth).next();
-            buffer.vertex(x + width, y + height, zLevel).texture((u + width) * pixelWidth, (v + height) * pixelWidth).next();
-            buffer.vertex(x + width, y, zLevel).texture((u + width) * pixelWidth, v * pixelWidth).next();
-            buffer.vertex(x, y, zLevel).texture(u * pixelWidth, v * pixelWidth).next();
+        RenderUtils.setupBlend();
+        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 
-            tessellator.draw();
-        }
+        buffer.vertex(x, y + height, zLevel).texture(u * pixelWidth, (v + height) * pixelWidth).next();
+        buffer.vertex(x + width, y + height, zLevel).texture((u + width) * pixelWidth, (v + height) * pixelWidth).next();
+        buffer.vertex(x + width, y, zLevel).texture((u + width) * pixelWidth, v * pixelWidth).next();
+        buffer.vertex(x, y, zLevel).texture(u * pixelWidth, v * pixelWidth).next();
+
+        tessellator.draw();
     }
 
     public void renderOverlays(MatrixStack matrixStack, Matrix4f projMatrix, MinecraftClient mc) {
