@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RenderHandler implements IRenderer {
+    public static final float ICON_RESIZER = 1.5f; // TODO be able to config this
     private static final RenderHandler INSTANCE = new RenderHandler();
     private final MinecraftClient mc;
     public int debug_count;
@@ -53,24 +54,41 @@ public class RenderHandler implements IRenderer {
 
     @Override
     public void onRenderGameOverlayPost(DrawContext drawContext) {
-        // TODO do something?
-        int width = mc.getWindow().getScaledWidth();
-        int height = mc.getWindow().getScaledHeight();
-        int x = width / 4;
-        int y = height / 4;
+        int winWidth = mc.getWindow().getScaledWidth();
+        int winHeight = mc.getWindow().getScaledHeight();
+        int x = winWidth / 4;
+        int y = winHeight / 4;
 
         INSTANCE.debug_count++;
-        if(INSTANCE.debug_count>=160){
-            INSTANCE.debug_count=0;
+        if (INSTANCE.debug_count >= 160) {
+            INSTANCE.debug_count = 0;
             System.out.println("fuck overlay post");
             System.out.println(x);
             System.out.println(y);
         }
 
-        for (var ping: this.pings.values()){
+        for (var ping : this.pings.values()) {
             RenderUtils.bindTexture(PING_BASIC);
-            RenderUtils.color(1f, 1f, 1f, 1f);
-            RenderUtils.drawTexturedRect(0, 0, 0, 0, 256, 256);
+
+//            RenderUtils.drawTexturedRect(0, 0, 0, 0, 128, 128);
+            double zLevel = 0;
+            var realResizer = ICON_RESIZER / 32;
+            float u = 0, v = 0, width = 256 * realResizer, height = 256 * realResizer;
+            float pixelWidth = 0.00390625F / realResizer;
+            RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+            RenderSystem.applyModelViewMatrix();
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.getBuffer();
+
+            RenderUtils.setupBlend();
+            buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+
+            buffer.vertex(x, y + height, zLevel).texture(u * pixelWidth, (v + height) * pixelWidth).next();
+            buffer.vertex(x + width, y + height, zLevel).texture((u + width) * pixelWidth, (v + height) * pixelWidth).next();
+            buffer.vertex(x + width, y, zLevel).texture((u + width) * pixelWidth, v * pixelWidth).next();
+            buffer.vertex(x, y, zLevel).texture(u * pixelWidth, v * pixelWidth).next();
+
+            tessellator.draw();
         }
     }
 
