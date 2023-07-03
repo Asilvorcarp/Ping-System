@@ -62,19 +62,25 @@ public class RenderHandler implements IRenderer {
     }
 
     private static void renderBeaconBoxForPlayer(Entity entity, MinecraftClient mc) {
+        // 83 63 -81
         Vec3d cameraPos = mc.gameRenderer.getCamera().getPos();
-        double x = Math.floor(entity.getX()) - cameraPos.x;
-        double y = Math.floor(entity.getY()) - cameraPos.y;
-        double z = Math.floor(entity.getZ()) - cameraPos.z;
+//        var enX = entity.getX();
+//        var enY = entity.getY();
+//        var enZ = entity.getZ();
+        double enX = 83.0, enY = 63.0, enZ = -81.0;
+        double x = Math.floor(enX) - cameraPos.x;
+        double y = Math.floor(enY) - cameraPos.y;
+        double z = Math.floor(enZ) - cameraPos.z;
         // Use the slot number as the level if sneaking
         assert mc.player != null;
-        int level = mc.player.isSneaking() ? Math.min(4, mc.player.getInventory().selectedSlot + 1) : 4;
-        double range = level * 10 + 10;
+//        int level = mc.player.isSneaking() ? Math.min(4, mc.player.getInventory().selectedSlot + 1) : 4;
+//        double range = level * 10 + 10;
+        double range = 0;
         double minX = x - range;
         double minY = y - range;
         double minZ = z - range;
         double maxX = x + range + 1;
-        double maxY = y + 4;
+        double maxY = y + range + 1;
         double maxZ = z + range + 1;
 //        Color4f color = OverlayRendererBeaconRange.getColorForLevel(level);
         Color4f color = new Color4f(247, 175, 53);
