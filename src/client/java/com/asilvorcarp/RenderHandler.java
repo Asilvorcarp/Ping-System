@@ -41,7 +41,7 @@ public class RenderHandler implements IRenderer {
         if (singlePingEach) {
             pings.put(p.owner, p);
         } else {
-            // TODO (later)
+            // TODO (later) more than one ping point for each player
         }
     }
 
