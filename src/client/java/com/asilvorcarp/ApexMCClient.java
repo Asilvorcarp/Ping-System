@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
@@ -19,9 +20,12 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
+import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Objects;
+
+import static com.asilvorcarp.RenderHandler.XY2Vec3d;
 
 public class ApexMCClient implements ClientModInitializer {
     public static final double MAX_REACH = 256.0D;
@@ -46,10 +50,10 @@ public class ApexMCClient implements ClientModInitializer {
         while (pingKeyBinding.wasPressed()) {
             System.out.println("pressed ping key");
 
-            Text mes = Text.literal("Mozambique here!");
             assert client.player != null;
             var player = client.player;
-            player.sendMessage(mes, false);
+//            Text mes = Text.literal("Mozambique here!");
+//            player.sendMessage(mes, true);
 
             // FIXME: play sound
             var world = client.world;
@@ -71,36 +75,59 @@ public class ApexMCClient implements ClientModInitializer {
             assert client.cameraEntity != null;
             Vec3d cameraDirection = client.cameraEntity.getRotationVec(tickDelta);
 
-            HitResult hit = raycast(client.cameraEntity, MAX_REACH, tickDelta, false, cameraDirection);
-            // HitResult hit = client.crosshairTarget;
+            pingDirection(client, player, tickDelta, cameraDirection);
 
-            Vec3d pingPos = null;
-            switch (Objects.requireNonNull(hit).getType()) {
-                case MISS -> player.sendMessage(Text.literal("Too far"), true);
-                case BLOCK -> {
-                    BlockHitResult blockHit = (BlockHitResult) hit;
-                    BlockPos blockPos = blockHit.getBlockPos();
-                    BlockState blockState = client.world.getBlockState(blockPos);
-                    Block block = blockState.getBlock();
-                    final Text blockMes = block.getName();
-                    player.sendMessage(blockMes, true);
-                    pingPos = hit.getPos();
-                }
-                case ENTITY -> {
-                    EntityHitResult entityHit = (EntityHitResult) hit;
-                    Entity entity = entityHit.getEntity();
-                    final Text entityMes = entity.getName();
-                    player.sendMessage(entityMes, true);
-                    pingPos = hit.getPos();
-                }
+//            // DEBUG: a big curved surface
+//            int width = client.getWindow().getScaledWidth();
+//            int height = client.getWindow().getScaledHeight();
+//            for (int x = 0; x < width; x+=6) {
+//                for (int y = 0; y < height; y+=6) {
+//                    Vec3d dir = XY2Vec3d(new Vector2i(x, y));
+//                    Objects.requireNonNull(dir).normalize();
+//                    double dist = 25;
+//                    pingDirDistance(client, player, tickDelta, dir, dist);
+//                }
+//            }
+        }
+    }
+
+    private static void pingDirDistance(MinecraftClient client, ClientPlayerEntity player, float tickDelta, Vec3d dir, double dist) {
+        assert client.cameraEntity != null;
+        Vec3d cameraPos = client.cameraEntity.getPos();
+        Vec3d pingPos = cameraPos.add(dir.multiply(dist));
+
+        RenderHandler.getInstance().addPing(new PingPoint(pingPos, player.getEntityName()));
+    }
+
+    private static void pingDirection(MinecraftClient client, ClientPlayerEntity player, float tickDelta, Vec3d dir) {
+        assert client.cameraEntity != null;
+        HitResult hit = raycast(client.cameraEntity, MAX_REACH, tickDelta, false, dir);
+
+        Vec3d pingPos = null;
+        switch (Objects.requireNonNull(hit).getType()) {
+            case MISS -> player.sendMessage(Text.literal("Too far"), true);
+            case BLOCK -> {
+                BlockHitResult blockHit = (BlockHitResult) hit;
+                BlockPos blockPos = blockHit.getBlockPos();
+                BlockState blockState = client.world.getBlockState(blockPos);
+                Block block = blockState.getBlock();
+                final Text blockMes = block.getName();
+                player.sendMessage(blockMes, true);
+                pingPos = hit.getPos();
             }
+            case ENTITY -> {
+                EntityHitResult entityHit = (EntityHitResult) hit;
+                Entity entity = entityHit.getEntity();
+                final Text entityMes = entity.getName();
+                player.sendMessage(entityMes, true);
+                pingPos = hit.getPos();
+            }
+        }
+
+        if (pingPos != null) {
             System.out.println("Ping at");
             System.out.println(pingPos);
-
-            if (pingPos != null) {
-                RenderHandler.getInstance().setPing(new PingPoint(pingPos, player.getEntityName()));
-            }
-
+            RenderHandler.getInstance().addPing(new PingPoint(pingPos, player.getEntityName()));
         }
     }
 

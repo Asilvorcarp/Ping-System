@@ -16,15 +16,18 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
 import java.lang.Math;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class RenderHandler implements IRenderer {
-    public static final float ICON_RESIZER = 1.5f; // TODO be able to config this
+    // TODO be able to config this
+    public static final float ICON_RESIZER = 1.5f;
     private static final RenderHandler INSTANCE = new RenderHandler();
     private final MinecraftClient mc;
     public int debug_count;
-    public Map<String, PingPoint> pings;
+    // TODO clear pings when quit world
+    public Map<String, ArrayList<PingPoint>> pings;
     public boolean singlePingEach;
     private static final Identifier PING_BASIC = new Identifier(ApexMC.MOD_ID, "textures/ping/ping_basic.png");
 
@@ -32,18 +35,28 @@ public class RenderHandler implements IRenderer {
         this.mc = MinecraftClient.getInstance();
         this.debug_count = 0;
         this.pings = new HashMap<>();
-        this.singlePingEach = true;
+        // TODO (later) be able to config this
+        this.singlePingEach = false;
     }
 
     public static RenderHandler getInstance() {
         return INSTANCE;
     }
 
-    public void setPing(PingPoint p) {
+    public void addPing(PingPoint p) {
         if (singlePingEach) {
-            pings.put(p.owner, p);
+            var list = new ArrayList<PingPoint>();
+            list.add(p);
+            pings.put(p.owner, list);
         } else {
-            // TODO (later) more than one ping point for each player
+            // TODO time to clear
+            if (pings.get(p.owner) == null) {
+                var list = new ArrayList<PingPoint>();
+                list.add(p);
+                pings.put(p.owner, list);
+            } else {
+                pings.get(p.owner).add(p);
+            }
         }
     }
 
@@ -71,10 +84,46 @@ public class RenderHandler implements IRenderer {
         return new Vec3d(temp2);
     }
 
-    private static Vector2d mapBack(double anglePerPixel, Vec3d cameraDir, Vector3f horizontalRotationAxis,
-                                    Vector3f verticalRotationAxis, Vec3d targetDir, int width, int height) {
+    private static Vector2d mapBack(double anglePerPixel, Vec3d cameraDir, Vec3d targetDir, Vector3f horAx, Vector3f verAx,
+                                    int width, int height, Vec3d cameraPos, Vec3d targetPos) {
         // TODO implement
-        return new Vector2d(10, 10);
+
+        Matrix4d viewMatrix = new Matrix4d();
+        Vector3d eyeVector = Vec3dToVector3d(cameraPos);
+        Vector3d centerVector = Vec3dToVector3d(cameraDir).normalize();
+        Vec3d leftVec = map(anglePerPixel, cameraDir, horAx, verAx, 0, 2 / height, width, height);
+        Vector3d leftVector = Vec3dToVector3d(leftVec);
+        Vector3d upVector = centerVector.cross(leftVector).normalize();
+        viewMatrix.setLookAt(eyeVector, centerVector, upVector);
+        Vector4d worldPositionVector = new Vector4d(Vec3dToVector3d(targetPos), 1);
+        Vector4d transformedPositionVector = new Vector4d();
+        viewMatrix.transform(worldPositionVector, transformedPositionVector);
+        double x_prime = transformedPositionVector.x;
+        double y_prime = transformedPositionVector.y;
+
+        double halfWidth = width / 2.0, halfHeight = height / 2.0;
+        // the x,y from the middle of the screen
+        double xm = x_prime - halfWidth, ym = y_prime - halfHeight;
+
+        // limit to screen border // TODO add margin
+        double xm_new = xm, ym_new = ym;
+        if (Math.abs(xm) > halfWidth) {
+            xm_new = halfWidth * Math.signum(xm);
+            ym_new = ym / xm * xm_new;
+        } else if (Math.abs(ym) > halfHeight) {
+            ym_new = halfHeight * Math.signum(ym);
+            xm_new = xm / ym * ym_new;
+        }
+        return new Vector2d(xm_new + halfWidth, ym_new + halfHeight);
+    }
+
+    @NotNull
+    private static Vector3d Vec3dToVector3d(Vec3d cameraDir) {
+        Vector3d ret = new Vector3d();
+        ret.x = cameraDir.x;
+        ret.y = cameraDir.y;
+        ret.z = cameraDir.z;
+        return ret;
     }
 
     private static Vector3f Vec3dToV3f(Vec3d v) {
@@ -87,28 +136,57 @@ public class RenderHandler implements IRenderer {
 
     @Override
     public void onRenderGameOverlayPost(DrawContext drawContext) {
-        for (var ping : this.pings.values()) {
-            // TODO get cx cy on camera
+        for (var entry : this.pings.entrySet()) {
+            var owner = entry.getKey();
+            for (var ping : entry.getValue()) {
 
-            MinecraftClient client = MinecraftClient.getInstance();
-            int width = client.getWindow().getScaledWidth();
-            int height = client.getWindow().getScaledHeight();
-            assert client.cameraEntity != null;
-            Vec3d cameraPos = client.cameraEntity.getPos();
-            Vec3d targetDir = ping.pos.subtract(cameraPos);
-            Vec3d cameraDirection = client.cameraEntity.getRotationVec(1.0f);
-            double fov = client.options.getFov().getValue();
-            double angleSize = fov / height;
+                // get cx cy on camera
+                MinecraftClient client = MinecraftClient.getInstance();
+                int width = client.getWindow().getScaledWidth();
+                int height = client.getWindow().getScaledHeight();
+                assert client.cameraEntity != null;
+                Vec3d cameraPos = client.cameraEntity.getPos();
+                Vec3d targetPos = ping.pos;
+                Vec3d targetDir = targetPos.subtract(cameraPos);
+                Vec3d cameraDirection = client.cameraEntity.getRotationVec(1.0f);
+                double fov = client.options.getFov().getValue();
+                double angleSize = fov / height;
 
-            Vector2d v2 = getIconCenter2(width, height, targetDir, cameraDirection, angleSize);
-//            System.out.println(v2);
+                Vector2d v2 = getIconCenter2(width, height, targetDir, cameraDirection, angleSize, cameraPos, targetPos);
 
-            renderIconHUD((int) v2.x, (int) v2.y, ping);
+                renderIconHUD((int) v2.x, (int) v2.y, ping);
+            }
         }
     }
 
+    public static Vec3d XY2Vec3d(Vector2i xy){
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client==null){
+            return null;
+        }
+        int width = client.getWindow().getScaledWidth();
+        int height = client.getWindow().getScaledHeight();
+        assert client.cameraEntity != null;
+        Vec3d cameraDirection = client.cameraEntity.getRotationVec(1.0f);
+        double fov = client.options.getFov().getValue();
+        double angleSize = fov / height;
+
+        Vector3f verticalRotationAxis = Vec3dToV3f(cameraDirection);
+        verticalRotationAxis.cross(new Vector3f(0, 1, 0));
+        verticalRotationAxis.normalize();
+        Vector3f horizontalRotationAxis = Vec3dToV3f(cameraDirection);
+        horizontalRotationAxis.cross(verticalRotationAxis);
+        horizontalRotationAxis.normalize();
+        verticalRotationAxis = Vec3dToV3f(cameraDirection);
+        verticalRotationAxis.cross(horizontalRotationAxis);
+        cameraDirection.normalize();
+
+        return map(angleSize, cameraDirection, horizontalRotationAxis, verticalRotationAxis, xy.x, xy.y, width, height);
+    }
+
     @NotNull
-    private Vector2d getIconCenter(int width, int height, Vec3d targetDir, Vec3d cameraDirection, double angleSize) {
+    private Vector2d getIconCenter(int width, int height, Vec3d targetDir, Vec3d cameraDirection,
+                                   double angleSize, Vec3d cameraPos, Vec3d targetPos) {
         Vector3f verticalRotationAxis = Vec3dToV3f(cameraDirection);
         verticalRotationAxis.cross(new Vector3f(0, 1, 0));
         verticalRotationAxis.normalize();
@@ -118,12 +196,13 @@ public class RenderHandler implements IRenderer {
         verticalRotationAxis = Vec3dToV3f(cameraDirection);
         verticalRotationAxis.cross(horizontalRotationAxis);
 
-        var v2 = mapBack(angleSize, cameraDirection, horizontalRotationAxis, verticalRotationAxis,
-                targetDir, width, height);
+        var v2 = mapBack(angleSize, cameraDirection, targetDir, horizontalRotationAxis, verticalRotationAxis,
+                width, height, cameraPos, targetPos);
         return v2;
     }
 
-    private Vector2d getIconCenter2(int width, int height, Vec3d targetDir, Vec3d cameraDirection, double angleSize) {
+    private Vector2d getIconCenter2(int width, int height, Vec3d targetDir,
+                                    Vec3d cameraDirection, double angleSize, Vec3d cameraPos, Vec3d targetPos) {
         Vector3f verticalRotationAxis = Vec3dToV3f(cameraDirection);
         verticalRotationAxis.cross(new Vector3f(0, 1, 0));
         verticalRotationAxis.normalize();
@@ -149,9 +228,9 @@ public class RenderHandler implements IRenderer {
                     ret.x = x;
                     ret.y = y;
                 }
-                if (theta <= 1) {
-                    break outerLoop;
-                }
+//                if (theta <= 1) {
+//                    break outerLoop;
+//                }
             }
         }
 
@@ -215,8 +294,14 @@ public class RenderHandler implements IRenderer {
             return;
         }
 
-        for (var ping : this.pings.values()) {
-            highlightPing(ping, mc);
+        for (var entry : this.pings.entrySet()) {
+            var owner = entry.getKey();
+            var pingList = entry.getValue();
+            // let it die
+            pingList.removeIf(PingPoint::isDead);
+            for (var ping : pingList) {
+                highlightPing(ping, mc);
+            }
         }
     }
 
