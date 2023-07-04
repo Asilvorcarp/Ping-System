@@ -16,14 +16,12 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
-import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
@@ -31,7 +29,6 @@ import java.util.Objects;
 
 import static com.asilvorcarp.ApexMC.LOGGER;
 import static com.asilvorcarp.NetworkingConstants.PING_PACKET;
-import static com.asilvorcarp.RenderHandler.XY2Vec3d;
 
 public class ApexMCClient implements ClientModInitializer {
     public static final double MAX_REACH = 256.0D;
@@ -52,10 +49,8 @@ public class ApexMCClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(ApexMCClient::checkKeyPress);
 
         ClientPlayNetworking.registerGlobalReceiver(PING_PACKET, (client, handler, buf, responseSender) -> {
-            client.execute(() -> {
-                // Everything in this lambda is run on the render thread
-                pingReceiver(buf);
-            });
+            // Everything in this lambda is run on the render thread
+            pingReceiver(buf);
         });
     }
 
@@ -167,10 +162,10 @@ public class ApexMCClient implements ClientModInitializer {
         ));
     }
 
-    public static void sendPingToServer(PingPoint p){
+    public static void sendPingToServer(PingPoint p) {
         try {
             PacketByteBuf buf = p.toPacketByteBuf();
-            ClientPlayNetworking.send(PING_PACKET, buf);
+            ClientPlayNetworking.send(NetworkingConstants.PING_PACKET, buf);
         } catch (IOException e) {
             LOGGER.info("Fail to send ping packet to server", e);
             return;
@@ -178,10 +173,11 @@ public class ApexMCClient implements ClientModInitializer {
     }
 
     public void pingReceiver(PacketByteBuf buf) {
-        try{
+        try {
             var p = PingPoint.fromPacketByteBuf(buf);
             addPointToRenderer(p);
-        } catch (Exception e){
+            System.out.println("received p");
+        } catch (Exception e) {
             LOGGER.info("Fail to deserialize the ping packet received", e);
             return;
         }

@@ -15,10 +15,12 @@ import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
+import java.awt.*;
 import java.lang.Math;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class RenderHandler implements IRenderer {
     // TODO be able to config this
@@ -27,7 +29,7 @@ public class RenderHandler implements IRenderer {
     private final MinecraftClient mc;
     public int debug_count;
     // TODO clear pings when quit world
-    public Map<String, ArrayList<PingPoint>> pings;
+    public Map<String, CopyOnWriteArrayList<PingPoint>> pings;
     public boolean singlePingEach;
     private static final Identifier PING_BASIC = new Identifier(ApexMC.MOD_ID, "textures/ping/ping_basic.png");
 
@@ -45,12 +47,12 @@ public class RenderHandler implements IRenderer {
 
     public void addPing(PingPoint p) {
         if (singlePingEach) {
-            var list = new ArrayList<PingPoint>();
+            var list = new CopyOnWriteArrayList<PingPoint>();
             list.add(p);
             pings.put(p.owner, list);
         } else {
             if (pings.get(p.owner) == null) {
-                var list = new ArrayList<PingPoint>();
+                var list = new CopyOnWriteArrayList<PingPoint>();
                 list.add(p);
                 pings.put(p.owner, list);
             } else {
@@ -121,7 +123,6 @@ public class RenderHandler implements IRenderer {
         for (var entry : this.pings.entrySet()) {
             var owner = entry.getKey();
             for (var ping : entry.getValue()) {
-
                 // get cx cy on camera
                 MinecraftClient client = MinecraftClient.getInstance();
                 int width = client.getWindow().getScaledWidth();
@@ -303,7 +304,11 @@ public class RenderHandler implements IRenderer {
         double maxX = x + size / 2;
         double maxY = y + size / 2;
         double maxZ = z + size / 2;
-        Color4f color = new Color4f(ping.color.getRed(), ping.color.getGreen(), ping.color.getBlue());
+        float r = ping.color.getRed(), g = ping.color.getGreen(), b = ping.color.getBlue();
+        r /= 256;
+        g /= 256;
+        b /= 256;
+        Color4f color = new Color4f(r,g,b);
 
         RenderSystem.disableCull();
         RenderSystem.enableDepthTest();

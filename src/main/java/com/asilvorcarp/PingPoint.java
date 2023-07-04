@@ -11,7 +11,6 @@ import java.io.*;
 import java.time.LocalDateTime;
 
 import static com.asilvorcarp.ApexMC.LOGGER;
-import static com.asilvorcarp.ApexMC.Vec3dToV3f;
 
 public class PingPoint implements Serializable {
     // TODO config for this
@@ -59,7 +58,7 @@ public class PingPoint implements Serializable {
         double x = stream.readDouble();
         double y = stream.readDouble();
         double z = stream.readDouble();
-        pos = new Vec3d(x,y,z);
+        pos = new Vec3d(x, y, z);
         owner = (String) stream.readObject();
         color = (Color) stream.readObject();
         createTime = (LocalDateTime) stream.readObject();
@@ -102,35 +101,23 @@ public class PingPoint implements Serializable {
 
     public PacketByteBuf toPacketByteBuf() throws IOException {
         var buf = PacketByteBufs.create();
-//        buf.writeBytes(this.toByteArray());
-        buf.writeVector3f(Vec3dToV3f(pos));
+        buf.writeBytes(this.toByteArray());
+//        buf.writeVector3f(Vec3dToV3f(pos));
         return buf;
     }
 
     public static PingPoint fromPacketByteBuf(PacketByteBuf buf) throws IOException, ClassNotFoundException {
+        var serializedData = buf.getWrittenBytes();
 
-        var v3f = buf.readVector3f();
-        var pos = new Vec3d(v3f);
-        var ret = new PingPoint(pos, "fuck");
-        return ret;
+        ByteArrayInputStream bis = new ByteArrayInputStream(serializedData);
+        ObjectInputStream ois = new ObjectInputStream(bis);
 
-//        LOGGER.info(String.valueOf(buf.readableBytes()));
-//        byte[] serializedData = new byte[buf.readableBytes()];
-//
-//        // 将ByteBuf中的字节数组复制到serializedData中
-//        serializedData = buf.getWrittenBytes();
-//
-//        LOGGER.info(String.valueOf(serializedData.length));
-//
-//        ByteArrayInputStream bis = new ByteArrayInputStream(serializedData);
-//        ObjectInputStream ois = new ObjectInputStream(bis);
-//
-//        // deserialize
-//        PingPoint p = (PingPoint) ois.readObject();
-//
-//        ois.close();
-//        bis.close();
+        // deserialize
+        PingPoint p = (PingPoint) ois.readObject();
 
-//        return p;
+        ois.close();
+        bis.close();
+
+        return p;
     }
 }

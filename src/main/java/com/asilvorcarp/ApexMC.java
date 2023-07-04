@@ -2,6 +2,7 @@ package com.asilvorcarp;
 
 import net.fabricmc.api.ModInitializer;
 
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.PacketByteBuf;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import static com.asilvorcarp.NetworkingConstants.PING_PACKET;
 
@@ -38,7 +40,7 @@ public class ApexMC implements ModInitializer {
         // teams.add(new ApexTeam("Asc", "Eyn"));
         // TODO add to team command, save state to file
 
-        ServerPlayNetworking.registerGlobalReceiver(PING_PACKET, ((server, player, handler, buf, responseSender) -> {
+        ServerPlayNetworking.registerGlobalReceiver(NetworkingConstants.PING_PACKET, ((server, player, handler, buf, responseSender) -> {
             multicastPing(player, PING_PACKET, buf);
         }));
     }
@@ -50,11 +52,12 @@ public class ApexMC implements ModInitializer {
             for (ServerPlayerEntity teammate : PlayerLookup.world((ServerWorld) sender.getWorld())) {
                 var senderName = sender.getEntityName();
                 var teammateName = teammate.getEntityName();
-                // skip oneself
-//                if (teammateName == senderName){
-//                    continue;
-//                }
-                ServerPlayNetworking.send(teammate, channelName, buf);
+//                 skip oneself
+                if (Objects.equals(teammateName, senderName)){
+                    continue;
+                }
+                var bufNew = PacketByteBufs.copy(buf.asByteBuf());
+                ServerPlayNetworking.send(teammate, channelName, bufNew);
                 LOGGER.info("%s send ping to %s".formatted(senderName, teammateName));
             }
         }
