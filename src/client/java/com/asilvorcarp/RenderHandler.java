@@ -75,7 +75,7 @@ public class RenderHandler implements IRenderer {
         float horizontalRotation = (float) ((x - width / 2f) * anglePerPixel);
         float verticalRotation = (float) ((y - height / 2f) * anglePerPixel);
 
-        final Vector3f temp2 = Vec3dToV3f(cameraDir);
+        final Vector3f temp2 = ApexMC.Vec3dToV3f(cameraDir);
         Quaternionfc rot1 = getDegreesQuaternion(verticalRotationAxis, verticalRotation);
         Quaternionfc rot2 = getDegreesQuaternion(horizontalRotationAxis, horizontalRotation);
         temp2.rotate(rot1);
@@ -88,13 +88,13 @@ public class RenderHandler implements IRenderer {
         // TODO implement
 
         Matrix4d viewMatrix = new Matrix4d();
-        Vector3d eyeVector = Vec3dToVector3d(cameraPos);
-        Vector3d centerVector = Vec3dToVector3d(cameraDir).normalize();
+        Vector3d eyeVector = ApexMC.Vec3dToVector3d(cameraPos);
+        Vector3d centerVector = ApexMC.Vec3dToVector3d(cameraDir).normalize();
         Vec3d leftVec = map(anglePerPixel, cameraDir, horAx, verAx, 0, 2 / height, width, height);
-        Vector3d leftVector = Vec3dToVector3d(leftVec);
+        Vector3d leftVector = ApexMC.Vec3dToVector3d(leftVec);
         Vector3d upVector = centerVector.cross(leftVector).normalize();
         viewMatrix.setLookAt(eyeVector, centerVector, upVector);
-        Vector4d worldPositionVector = new Vector4d(Vec3dToVector3d(targetPos), 1);
+        Vector4d worldPositionVector = new Vector4d(ApexMC.Vec3dToVector3d(targetPos), 1);
         Vector4d transformedPositionVector = new Vector4d();
         viewMatrix.transform(worldPositionVector, transformedPositionVector);
         double x_prime = transformedPositionVector.x;
@@ -114,23 +114,6 @@ public class RenderHandler implements IRenderer {
             xm_new = xm / ym * ym_new;
         }
         return new Vector2d(xm_new + halfWidth, ym_new + halfHeight);
-    }
-
-    @NotNull
-    private static Vector3d Vec3dToVector3d(Vec3d cameraDir) {
-        Vector3d ret = new Vector3d();
-        ret.x = cameraDir.x;
-        ret.y = cameraDir.y;
-        ret.z = cameraDir.z;
-        return ret;
-    }
-
-    private static Vector3f Vec3dToV3f(Vec3d v) {
-        var ret = new Vector3f();
-        ret.x = (float) v.x;
-        ret.y = (float) v.y;
-        ret.z = (float) v.z;
-        return ret;
     }
 
     @Override
@@ -170,13 +153,13 @@ public class RenderHandler implements IRenderer {
         double fov = client.options.getFov().getValue();
         double angleSize = fov / height;
 
-        Vector3f verticalRotationAxis = Vec3dToV3f(cameraDirection);
+        Vector3f verticalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
         verticalRotationAxis.cross(new Vector3f(0, 1, 0));
         verticalRotationAxis.normalize();
-        Vector3f horizontalRotationAxis = Vec3dToV3f(cameraDirection);
+        Vector3f horizontalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
         horizontalRotationAxis.cross(verticalRotationAxis);
         horizontalRotationAxis.normalize();
-        verticalRotationAxis = Vec3dToV3f(cameraDirection);
+        verticalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
         verticalRotationAxis.cross(horizontalRotationAxis);
         cameraDirection.normalize();
 
@@ -186,13 +169,13 @@ public class RenderHandler implements IRenderer {
     @NotNull
     private Vector2d getIconCenter(int width, int height, Vec3d targetDir, Vec3d cameraDirection,
                                    double angleSize, Vec3d cameraPos, Vec3d targetPos) {
-        Vector3f verticalRotationAxis = Vec3dToV3f(cameraDirection);
+        Vector3f verticalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
         verticalRotationAxis.cross(new Vector3f(0, 1, 0));
         verticalRotationAxis.normalize();
-        Vector3f horizontalRotationAxis = Vec3dToV3f(cameraDirection);
+        Vector3f horizontalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
         horizontalRotationAxis.cross(verticalRotationAxis);
         horizontalRotationAxis.normalize();
-        verticalRotationAxis = Vec3dToV3f(cameraDirection);
+        verticalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
         verticalRotationAxis.cross(horizontalRotationAxis);
 
         var v2 = mapBack(angleSize, cameraDirection, targetDir, horizontalRotationAxis, verticalRotationAxis,
@@ -203,13 +186,13 @@ public class RenderHandler implements IRenderer {
     // TODO optimize this
     private Vector2d getIconCenter2(int width, int height, Vec3d targetDir,
                                     Vec3d cameraDirection, double angleSize, Vec3d cameraPos, Vec3d targetPos) {
-        Vector3f verticalRotationAxis = Vec3dToV3f(cameraDirection);
+        Vector3f verticalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
         verticalRotationAxis.cross(new Vector3f(0, 1, 0));
         verticalRotationAxis.normalize();
-        Vector3f horizontalRotationAxis = Vec3dToV3f(cameraDirection);
+        Vector3f horizontalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
         horizontalRotationAxis.cross(verticalRotationAxis);
         horizontalRotationAxis.normalize();
-        verticalRotationAxis = Vec3dToV3f(cameraDirection);
+        verticalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
         verticalRotationAxis.cross(horizontalRotationAxis);
         cameraDirection.normalize();
 
@@ -258,13 +241,13 @@ public class RenderHandler implements IRenderer {
         int x = (int) (cx - width / 2);
         int y = (int) (cy - height / 2);
 
-        INSTANCE.debug_count++;
-        if (INSTANCE.debug_count >= 160) {
-            INSTANCE.debug_count = 0;
-            System.out.println("fuck overlay post");
-            System.out.println(x);
-            System.out.println(y);
-        }
+//        INSTANCE.debug_count++;
+//        if (INSTANCE.debug_count >= 160) {
+//            INSTANCE.debug_count = 0;
+//            System.out.println("fuck overlay post");
+//            System.out.println(x);
+//            System.out.println(y);
+//        }
 
         // TODO add background
         RenderUtils.bindTexture(PING_BASIC);
@@ -320,7 +303,7 @@ public class RenderHandler implements IRenderer {
         double maxX = x + size / 2;
         double maxY = y + size / 2;
         double maxZ = z + size / 2;
-        Color4f color = ping.color;
+        Color4f color = new Color4f(ping.color.getRed(), ping.color.getGreen(), ping.color.getBlue());
 
         RenderSystem.disableCull();
         RenderSystem.enableDepthTest();

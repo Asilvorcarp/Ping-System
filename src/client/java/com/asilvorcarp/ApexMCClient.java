@@ -4,6 +4,7 @@ import fi.dy.masa.malilib.event.InitializationHandler;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
@@ -11,9 +12,11 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -23,8 +26,11 @@ import net.minecraft.world.RaycastContext;
 import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
+import java.io.IOException;
 import java.util.Objects;
 
+import static com.asilvorcarp.ApexMC.LOGGER;
+import static com.asilvorcarp.NetworkingConstants.PING_PACKET;
 import static com.asilvorcarp.RenderHandler.XY2Vec3d;
 
 public class ApexMCClient implements ClientModInitializer {
@@ -44,6 +50,13 @@ public class ApexMCClient implements ClientModInitializer {
         InitializationHandler.getInstance().registerInitializationHandler(new InitHandler());
 
         ClientTickEvents.END_CLIENT_TICK.register(ApexMCClient::checkKeyPress);
+
+        ClientPlayNetworking.registerGlobalReceiver(PING_PACKET, (client, handler, buf, responseSender) -> {
+            client.execute(() -> {
+                // Everything in this lambda is run on the render thread
+                pingReceiver(buf);
+            });
+        });
     }
 
     private static void checkKeyPress(MinecraftClient client) {
@@ -95,8 +108,8 @@ public class ApexMCClient implements ClientModInitializer {
         assert client.cameraEntity != null;
         Vec3d cameraPos = client.cameraEntity.getPos();
         Vec3d pingPos = cameraPos.add(dir.multiply(dist));
-
-        RenderHandler.getInstance().addPing(new PingPoint(pingPos, player.getEntityName()));
+        PingPoint p = new PingPoint(pingPos, player.getEntityName());
+        addPointToRenderer(p);
     }
 
     private static void pingDirection(MinecraftClient client, ClientPlayerEntity player, float tickDelta, Vec3d dir) {
@@ -127,8 +140,14 @@ public class ApexMCClient implements ClientModInitializer {
         if (pingPos != null) {
             System.out.println("Ping at");
             System.out.println(pingPos);
-            RenderHandler.getInstance().addPing(new PingPoint(pingPos, player.getEntityName()));
+            PingPoint p = new PingPoint(pingPos, player.getEntityName());
+            addPointToRenderer(p);
+            sendPingToServer(p);
         }
+    }
+
+    private static void addPointToRenderer(PingPoint p) {
+        RenderHandler.getInstance().addPing(p);
     }
 
     private static HitResult raycast(
@@ -146,5 +165,25 @@ public class ApexMCClient implements ClientModInitializer {
                 includeFluids ? RaycastContext.FluidHandling.ANY : RaycastContext.FluidHandling.NONE,
                 entity
         ));
+    }
+
+    public static void sendPingToServer(PingPoint p){
+        try {
+            PacketByteBuf buf = p.toPacketByteBuf();
+            ClientPlayNetworking.send(PING_PACKET, buf);
+        } catch (IOException e) {
+            LOGGER.info("Fail to send ping packet to server", e);
+            return;
+        }
+    }
+
+    public void pingReceiver(PacketByteBuf buf) {
+        try{
+            var p = PingPoint.fromPacketByteBuf(buf);
+            addPointToRenderer(p);
+        } catch (Exception e){
+            LOGGER.info("Fail to deserialize the ping packet received", e);
+            return;
+        }
     }
 }
