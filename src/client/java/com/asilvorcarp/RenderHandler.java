@@ -200,6 +200,7 @@ public class RenderHandler implements IRenderer {
         return v2;
     }
 
+    // TODO optimize this
     private Vector2d getIconCenter2(int width, int height, Vec3d targetDir,
                                     Vec3d cameraDirection, double angleSize, Vec3d cameraPos, Vec3d targetPos) {
         Vector3f verticalRotationAxis = Vec3dToV3f(cameraDirection);
