@@ -39,7 +39,7 @@ public class PingPoint implements Serializable {
         return LocalDateTime.now().minusSeconds(SecondsToVanish).isAfter(createTime);
     }
 
-    // Vec3d is not serializable
+    // for Vec3d is not serializable
     @Serial
     private void writeObject(ObjectOutputStream stream)
             throws IOException {
@@ -51,7 +51,7 @@ public class PingPoint implements Serializable {
         stream.writeObject(createTime);
     }
 
-    // Vec3d is not serializable
+    // for Vec3d is not serializable
     @Serial
     private void readObject(ObjectInputStream stream)
             throws IOException, ClassNotFoundException {
@@ -62,25 +62,6 @@ public class PingPoint implements Serializable {
         owner = (String) stream.readObject();
         color = (Color) stream.readObject();
         createTime = (LocalDateTime) stream.readObject();
-    }
-
-    public ByteBuf toByteBuf() throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(bos);
-
-        oos.writeObject(this);
-        oos.flush();
-
-        // get byte array
-        byte[] serializedData = bos.toByteArray();
-
-        ByteBuf buffer = Unpooled.buffer(serializedData.length);
-        buffer.writeBytes(serializedData);
-
-        oos.close();
-        bos.close();
-
-        return buffer;
     }
 
     public byte[] toByteArray() throws IOException {
@@ -102,7 +83,6 @@ public class PingPoint implements Serializable {
     public PacketByteBuf toPacketByteBuf() throws IOException {
         var buf = PacketByteBufs.create();
         buf.writeBytes(this.toByteArray());
-//        buf.writeVector3f(Vec3dToV3f(pos));
         return buf;
     }
 

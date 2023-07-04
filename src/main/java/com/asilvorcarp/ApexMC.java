@@ -8,7 +8,11 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Position;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3d;
@@ -16,6 +20,7 @@ import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -49,6 +54,22 @@ public class ApexMC implements ModInitializer {
         if (ENABLE_TEAMS) {
             // TODO implement teams
         } else {
+            // FIXME: play sound
+            try {
+                var p = PingPoint.fromPacketByteBuf(buf);
+                if (sender.getWorld() != null) {
+                    sender.getWorld().playSound(
+                            null, // Player - if non-null, will play sound for every nearby player *except* the specified player
+                            BlockPos.ofFloored(p.pos), // The position of where the sound will come from
+                            SoundEvents.BLOCK_ANVIL_BREAK, // The sound that will play, in this case, the sound the anvil plays when it lands.
+                            SoundCategory.BLOCKS, // This determines which of the volume sliders affect this sound
+                            1f, // Volume multiplier, 1 is normal, 0.5 is half volume, etc
+                            1f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
+                    );
+                }
+            } catch (Exception e) {
+                LOGGER.error("Fail to deserialize ping point at server side", e);
+            }
             for (ServerPlayerEntity teammate : PlayerLookup.world((ServerWorld) sender.getWorld())) {
                 var senderName = sender.getEntityName();
                 var teammateName = teammate.getEntityName();

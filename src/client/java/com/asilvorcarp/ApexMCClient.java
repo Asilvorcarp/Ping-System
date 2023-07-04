@@ -56,46 +56,14 @@ public class ApexMCClient implements ClientModInitializer {
 
     private static void checkKeyPress(MinecraftClient client) {
         while (pingKeyBinding.wasPressed()) {
-            System.out.println("pressed ping key");
-
             assert client.player != null;
             var player = client.player;
-//            Text mes = Text.literal("Mozambique here!");
-//            player.sendMessage(mes, true);
-
-            // FIXME: play sound
-            var world = client.world;
-            assert world != null;
-            BlockPos soundPos = player.getBlockPos();
-            System.out.println(soundPos);
-            world.playSound(
-                    null, // Player - if non-null, will play sound for every nearby player *except* the specified player
-                    soundPos, // The position of where the sound will come from
-                    SoundEvents.BLOCK_ANVIL_BREAK, // The sound that will play, in this case, the sound the anvil plays when it lands.
-                    SoundCategory.BLOCKS, // This determines which of the volume sliders affect this sound
-                    1f, // Volume multiplier, 1 is normal, 0.5 is half volume, etc
-                    1f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
-            );
-
-            // get the targeted block
 
             float tickDelta = 1.0f; // TODO test this
             assert client.cameraEntity != null;
             Vec3d cameraDirection = client.cameraEntity.getRotationVec(tickDelta);
 
             pingDirection(client, player, tickDelta, cameraDirection);
-
-//            // DEBUG: a big curved surface
-//            int width = client.getWindow().getScaledWidth();
-//            int height = client.getWindow().getScaledHeight();
-//            for (int x = 0; x < width; x+=6) {
-//                for (int y = 0; y < height; y+=6) {
-//                    Vec3d dir = XY2Vec3d(new Vector2i(x, y));
-//                    Objects.requireNonNull(dir).normalize();
-//                    double dist = 25;
-//                    pingDirDistance(client, player, tickDelta, dir, dist);
-//                }
-//            }
         }
     }
 
@@ -105,9 +73,10 @@ public class ApexMCClient implements ClientModInitializer {
         Vec3d pingPos = cameraPos.add(dir.multiply(dist));
         PingPoint p = new PingPoint(pingPos, player.getEntityName());
         addPointToRenderer(p);
+        sendPingToServer(p);
     }
 
-    private static void pingDirection(MinecraftClient client, ClientPlayerEntity player, float tickDelta, Vec3d dir) {
+    private static Vec3d pingDirection(MinecraftClient client, ClientPlayerEntity player, float tickDelta, Vec3d dir) {
         assert client.cameraEntity != null;
         HitResult hit = raycast(client.cameraEntity, MAX_REACH, tickDelta, false, dir);
 
@@ -123,6 +92,7 @@ public class ApexMCClient implements ClientModInitializer {
                 player.sendMessage(blockMes, true);
                 pingPos = hit.getPos();
             }
+            // TODO (hard) follow entity
             case ENTITY -> {
                 EntityHitResult entityHit = (EntityHitResult) hit;
                 Entity entity = entityHit.getEntity();
@@ -133,12 +103,13 @@ public class ApexMCClient implements ClientModInitializer {
         }
 
         if (pingPos != null) {
-            System.out.println("Ping at");
-            System.out.println(pingPos);
+            LOGGER.debug("Ping at "+ pingPos);
             PingPoint p = new PingPoint(pingPos, player.getEntityName());
             addPointToRenderer(p);
             sendPingToServer(p);
         }
+
+        return pingPos;
     }
 
     private static void addPointToRenderer(PingPoint p) {
@@ -167,7 +138,7 @@ public class ApexMCClient implements ClientModInitializer {
             PacketByteBuf buf = p.toPacketByteBuf();
             ClientPlayNetworking.send(NetworkingConstants.PING_PACKET, buf);
         } catch (IOException e) {
-            LOGGER.info("Fail to send ping packet to server", e);
+            LOGGER.error("Fail to send ping packet to server", e);
             return;
         }
     }
@@ -176,9 +147,9 @@ public class ApexMCClient implements ClientModInitializer {
         try {
             var p = PingPoint.fromPacketByteBuf(buf);
             addPointToRenderer(p);
-            System.out.println("received p");
+            LOGGER.debug("Received ping at "+ p.pos.toString());
         } catch (Exception e) {
-            LOGGER.info("Fail to deserialize the ping packet received", e);
+            LOGGER.error("Fail to deserialize the ping packet received", e);
             return;
         }
     }
