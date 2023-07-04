@@ -49,7 +49,6 @@ public class RenderHandler implements IRenderer {
             list.add(p);
             pings.put(p.owner, list);
         } else {
-            // TODO time to clear
             if (pings.get(p.owner) == null) {
                 var list = new ArrayList<PingPoint>();
                 list.add(p);

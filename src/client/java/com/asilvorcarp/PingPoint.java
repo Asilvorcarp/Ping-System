@@ -29,6 +29,6 @@ public class PingPoint {
     }
 
     public boolean shouldVanish(){
-        return LocalDateTime.now().minusSeconds(SecondsToVanish).compareTo(createTime)>0;
+        return LocalDateTime.now().minusSeconds(SecondsToVanish).isAfter(createTime);
     }
 }
