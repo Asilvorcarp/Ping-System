@@ -15,11 +15,8 @@ import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
-import java.awt.*;
 import java.lang.Math;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class RenderHandler implements IRenderer {
@@ -28,17 +25,17 @@ public class RenderHandler implements IRenderer {
     private static final RenderHandler INSTANCE = new RenderHandler();
     private final MinecraftClient mc;
     public int debug_count;
-    // TODO clear pings when quit world
-    public Map<String, CopyOnWriteArrayList<PingPoint>> pings;
-    public boolean singlePingEach;
+    // safe for multi-thread
+    public HashMap<String, CopyOnWriteArrayList<PingPoint>> pings;
+    public int pingNumEach;
     private static final Identifier PING_BASIC = new Identifier(ApexMC.MOD_ID, "textures/ping/ping_basic.png");
 
     public RenderHandler() {
         this.mc = MinecraftClient.getInstance();
         this.debug_count = 0;
         this.pings = new HashMap<>();
-        // TODO (later) be able to config this
-        this.singlePingEach = false;
+        // TODO be able to config this
+        this.pingNumEach = 3;
     }
 
     public static RenderHandler getInstance() {
@@ -46,18 +43,16 @@ public class RenderHandler implements IRenderer {
     }
 
     public void addPing(PingPoint p) {
-        if (singlePingEach) {
+        if (pings.get(p.owner) == null) {
             var list = new CopyOnWriteArrayList<PingPoint>();
             list.add(p);
             pings.put(p.owner, list);
         } else {
-            if (pings.get(p.owner) == null) {
-                var list = new CopyOnWriteArrayList<PingPoint>();
-                list.add(p);
-                pings.put(p.owner, list);
-            } else {
-                pings.get(p.owner).add(p);
+            var pingList = pings.get(p.owner);
+            if (pingList.size() >= pingNumEach) {
+                pingList.subList(0, pingList.size() - pingNumEach + 1).clear();
             }
+            pingList.add(p);
         }
     }
 
@@ -142,9 +137,9 @@ public class RenderHandler implements IRenderer {
         }
     }
 
-    public static Vec3d XY2Vec3d(Vector2i xy){
+    public static Vec3d XY2Vec3d(Vector2i xy) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client==null){
+        if (client == null) {
             return null;
         }
         int width = client.getWindow().getScaledWidth();
@@ -308,7 +303,7 @@ public class RenderHandler implements IRenderer {
         r /= 256;
         g /= 256;
         b /= 256;
-        Color4f color = new Color4f(r,g,b);
+        Color4f color = new Color4f(r, g, b);
 
         RenderSystem.disableCull();
         RenderSystem.enableDepthTest();

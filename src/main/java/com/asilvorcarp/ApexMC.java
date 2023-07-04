@@ -6,9 +6,12 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -35,6 +38,18 @@ public class ApexMC implements ModInitializer {
     public static ArrayList<ApexTeam> teams = new ArrayList<>();
     public static boolean ENABLE_TEAMS = false;
 
+    public static final Identifier PING_LOCATION_SOUND = new Identifier("apex_mc:ping_location");
+    public static SoundEvent PING_LOCATION_EVENT = SoundEvent.of(PING_LOCATION_SOUND);
+    public static final Identifier PING_ITEM_SOUND = new Identifier("apex_mc:ping_item");
+    public static SoundEvent PING_ITEM_EVENT = SoundEvent.of(PING_ITEM_SOUND);
+    public static final Identifier PING_ENEMY_SOUND = new Identifier("apex_mc:ping_enemy");
+    public static SoundEvent PING_ENEMY_EVENT = SoundEvent.of(PING_ENEMY_SOUND);
+    public static final Identifier MOZAMBIQUE_LIFELINE_SOUND = new Identifier("apex_mc:mozambique_lifeline");
+    public static SoundEvent MOZAMBIQUE_LIFELINE_EVENT = SoundEvent.of(MOZAMBIQUE_LIFELINE_SOUND);
+    // TODO be able to config this
+    public static final SoundEvent DEFAULT_SOUND_EVENT = PING_LOCATION_EVENT;
+    // maybe SoundEvents.BLOCK_ANVIL_BREAK
+
     @Override
     public void onInitialize() {
         // This code runs as soon as Minecraft is in a mod-load-ready state.
@@ -45,35 +60,35 @@ public class ApexMC implements ModInitializer {
         // teams.add(new ApexTeam("Asc", "Eyn"));
         // TODO add to team command, save state to file
 
+        // register receiver
         ServerPlayNetworking.registerGlobalReceiver(NetworkingConstants.PING_PACKET, ((server, player, handler, buf, responseSender) -> {
             multicastPing(player, PING_PACKET, buf);
         }));
+
+        // register sound events
+        Registry.register(Registries.SOUND_EVENT, PING_LOCATION_SOUND, PING_LOCATION_EVENT);
+        Registry.register(Registries.SOUND_EVENT, PING_ITEM_SOUND, PING_ITEM_EVENT);
+        Registry.register(Registries.SOUND_EVENT, PING_ENEMY_SOUND, PING_ENEMY_EVENT);
+        Registry.register(Registries.SOUND_EVENT, MOZAMBIQUE_LIFELINE_SOUND, MOZAMBIQUE_LIFELINE_EVENT);
     }
 
     public static void multicastPing(ServerPlayerEntity sender, Identifier channelName, PacketByteBuf buf) {
         if (ENABLE_TEAMS) {
             // TODO implement teams
         } else {
-            // FIXME: play sound
-            try {
-                var p = PingPoint.fromPacketByteBuf(buf);
-                if (sender.getWorld() != null) {
-                    sender.getWorld().playSound(
-                            null, // Player - if non-null, will play sound for every nearby player *except* the specified player
-                            BlockPos.ofFloored(p.pos), // The position of where the sound will come from
-                            SoundEvents.BLOCK_ANVIL_BREAK, // The sound that will play, in this case, the sound the anvil plays when it lands.
-                            SoundCategory.BLOCKS, // This determines which of the volume sliders affect this sound
-                            1f, // Volume multiplier, 1 is normal, 0.5 is half volume, etc
-                            1f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
-                    );
-                }
-            } catch (Exception e) {
-                LOGGER.error("Fail to deserialize ping point at server side", e);
-            }
             for (ServerPlayerEntity teammate : PlayerLookup.world((ServerWorld) sender.getWorld())) {
                 var senderName = sender.getEntityName();
                 var teammateName = teammate.getEntityName();
-//                 skip oneself
+                // play sound for all // TODO how to play for one
+                teammate.getWorld().playSound(
+                        null, // Player - if non-null, will play sound for every nearby player *except* the specified player
+                        teammate.getBlockPos(), // The position of where the sound will come from
+                        DEFAULT_SOUND_EVENT,
+                        SoundCategory.BLOCKS, // This determines which of the volume sliders affect this sound
+                        1f, // Volume multiplier, 1 is normal, 0.5 is half volume, etc
+                        1f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
+                );
+                // packet skip oneself
                 if (Objects.equals(teammateName, senderName)){
                     continue;
                 }

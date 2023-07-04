@@ -13,8 +13,6 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
@@ -63,7 +61,8 @@ public class ApexMCClient implements ClientModInitializer {
             assert client.cameraEntity != null;
             Vec3d cameraDirection = client.cameraEntity.getRotationVec(tickDelta);
 
-            pingDirection(client, player, tickDelta, cameraDirection);
+            // config for include fluids
+            pingDirection(client, player, tickDelta, cameraDirection, true);
         }
     }
 
@@ -76,9 +75,10 @@ public class ApexMCClient implements ClientModInitializer {
         sendPingToServer(p);
     }
 
-    private static Vec3d pingDirection(MinecraftClient client, ClientPlayerEntity player, float tickDelta, Vec3d dir) {
+    private static Vec3d pingDirection(MinecraftClient client, ClientPlayerEntity player, float tickDelta,
+                                       Vec3d dir, boolean includeFluids) {
         assert client.cameraEntity != null;
-        HitResult hit = raycast(client.cameraEntity, MAX_REACH, tickDelta, false, dir);
+        HitResult hit = raycast(client.cameraEntity, MAX_REACH, tickDelta, includeFluids, dir);
 
         Vec3d pingPos = null;
         switch (Objects.requireNonNull(hit).getType()) {
@@ -97,7 +97,7 @@ public class ApexMCClient implements ClientModInitializer {
                 EntityHitResult entityHit = (EntityHitResult) hit;
                 Entity entity = entityHit.getEntity();
                 final Text entityMes = entity.getName();
-                player.sendMessage(entityMes, true);
+                player.sendMessage(entityMes, false);
                 pingPos = hit.getPos();
             }
         }
@@ -127,7 +127,7 @@ public class ApexMCClient implements ClientModInitializer {
         return entity.getWorld().raycast(new RaycastContext(
                 entity.getCameraPosVec(tickDelta),
                 end,
-                RaycastContext.ShapeType.OUTLINE,
+                RaycastContext.ShapeType.COLLIDER,
                 includeFluids ? RaycastContext.FluidHandling.ANY : RaycastContext.FluidHandling.NONE,
                 entity
         ));

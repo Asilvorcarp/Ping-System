@@ -1,0 +1,26 @@
+{
+  "ping_location": {
+    "subtitle": "subtitles.apex_mc.ping_location",
+    "sounds": [
+      "apex_mc:ping_location"
+    ]
+  },
+  "ping_item": {
+    "subtitle": "subtitles.apex_mc.ping_item",
+    "sounds": [
+      "apex_mc:ping_item"
+    ]
+  },
+  "ping_enemy": {
+    "subtitle": "subtitles.apex_mc.ping_enemy",
+    "sounds": [
+      "apex_mc:ping_enemy"
+    ]
+  },
+  "mozambique_lifeline": {
+    "subtitle": "subtitles.apex_mc.mozambique_lifeline",
+    "sounds": [
+      "apex_mc:mozambique_lifeline"
+    ]
+  }
+}
