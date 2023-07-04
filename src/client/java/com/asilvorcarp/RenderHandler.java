@@ -298,7 +298,7 @@ public class RenderHandler implements IRenderer {
             var owner = entry.getKey();
             var pingList = entry.getValue();
             // let it die
-            pingList.removeIf(PingPoint::isDead);
+            pingList.removeIf(PingPoint::shouldVanish);
             for (var ping : pingList) {
                 highlightPing(ping, mc);
             }

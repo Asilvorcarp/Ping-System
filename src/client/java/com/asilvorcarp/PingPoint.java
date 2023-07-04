@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 public class PingPoint {
     // TODO config for this
-    public static long SecondsToDisappear = 10;
+    public static long SecondsToVanish = 10;
     public Vec3d pos;
     public String owner;
     public Color4f color;
@@ -28,7 +28,7 @@ public class PingPoint {
         this.createTime = LocalDateTime.now();
     }
 
-    public boolean isDead(){
-        return LocalDateTime.now().minusSeconds(SecondsToDisappear).compareTo(createTime)>0;
+    public boolean shouldVanish(){
+        return LocalDateTime.now().minusSeconds(SecondsToVanish).compareTo(createTime)>0;
     }
 }
