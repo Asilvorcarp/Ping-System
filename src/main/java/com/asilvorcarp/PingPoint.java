@@ -14,7 +14,8 @@ import static com.asilvorcarp.ApexMC.LOGGER;
 
 public class PingPoint implements Serializable {
     // TODO config for this
-    public static long SecondsToVanish = 10;
+    // zero means never
+    public static long SecondsToVanish = 0;
     public Vec3d pos;
     public String owner;
     public Color color;
@@ -36,6 +37,9 @@ public class PingPoint implements Serializable {
     }
 
     public boolean shouldVanish() {
+        if(SecondsToVanish == 0){
+            return false;
+        }
         return LocalDateTime.now().minusSeconds(SecondsToVanish).isAfter(createTime);
     }
 

@@ -24,7 +24,7 @@ import static com.asilvorcarp.ApexMC.Vec3dToVector3d;
 public class RenderHandler implements IRenderer {
     public static final boolean DEBUG = true;
     // TODO be able to config this
-    public static final float ICON_RESIZER = 1.5f;
+    public static final float ICON_RESIZER = 1f;
     private static final RenderHandler INSTANCE = new RenderHandler();
     private final MinecraftClient mc;
     public int debug_count;
@@ -155,6 +155,7 @@ public class RenderHandler implements IRenderer {
         // the look-at transformation
         viewMatrix.setLookAt(eyeVector, centerVector, upVector);
         Vector3d tarVector = Vec3dToVector3d(targetPos);
+        tarVector.y -= 1.618; // TODO but why???
         Vector4d worldPositionVector = new Vector4d(tarVector, 1);
         Vector4d tarPosCamSpace4 = new Vector4d();
         viewMatrix.transform(worldPositionVector, tarPosCamSpace4);
@@ -194,14 +195,8 @@ public class RenderHandler implements IRenderer {
         if (DEBUG)
             System.out.printf("sx sy: %.2f, %.2f\n", sx, sy);
 
-        // TODO need to scale but why???
-        double scaler = 2.80 * 90 / fov; // 2.80 for 90
-        sx = sx / scaler;
-        sy = sy / scaler;
-
         // the x,y from the middle of the screen, increase when right down
-        double mx = sx / degreePerPixel, my = -sy / degreePerPixel;
-
+        double mx = sx, my = -sy;
         // if at back, move to border
         if (atBack) {
             var tempMx = halfWidth * -Math.signum(mx);
