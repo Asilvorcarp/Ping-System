@@ -6,14 +6,17 @@ Make MC Apex Again.
 
 ## 1. Ping System
 
+Default hotkey: `z`
+
 Send signal to your team for communication.
 
-Default hotkey: `z`
+Press hotkey again on the Ping Point to cancel it.
 
 Todo:
 
-- [ ] show distance
-- [ ] click to cancel
+- [x] show distance
+- [x] show owner
+- [x] press again to cancel
 
 ## Dependencies
 

@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 import static com.asilvorcarp.NetworkingConstants.PING_PACKET;
+import static com.asilvorcarp.NetworkingConstants.REMOVE_PING_PACKET;
 
 public class ApexMC implements ModInitializer {
     // This logger is used to write text to the console and the log file.
@@ -64,6 +65,9 @@ public class ApexMC implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(NetworkingConstants.PING_PACKET, ((server, player, handler, buf, responseSender) -> {
             multicastPing(player, PING_PACKET, buf);
         }));
+        ServerPlayNetworking.registerGlobalReceiver(NetworkingConstants.REMOVE_PING_PACKET, ((server, player, handler, buf, responseSender) -> {
+            multicastRemovePing(player, REMOVE_PING_PACKET, buf);
+        }));
 
         // register sound events
         Registry.register(Registries.SOUND_EVENT, PING_LOCATION_SOUND, PING_LOCATION_EVENT);
@@ -95,6 +99,24 @@ public class ApexMC implements ModInitializer {
                 var bufNew = PacketByteBufs.copy(buf.asByteBuf());
                 ServerPlayNetworking.send(teammate, channelName, bufNew);
                 LOGGER.info("%s send ping to %s".formatted(senderName, teammateName));
+            }
+        }
+    }
+
+    public static void multicastRemovePing(ServerPlayerEntity sender, Identifier channelName, PacketByteBuf buf) {
+        if (ENABLE_TEAMS) {
+            // TODO implement teams
+        } else {
+            for (ServerPlayerEntity teammate : PlayerLookup.world((ServerWorld) sender.getWorld())) {
+                var senderName = sender.getEntityName();
+                var teammateName = teammate.getEntityName();
+                // packet skip oneself
+                if (Objects.equals(teammateName, senderName)){
+                    continue;
+                }
+                var bufNew = PacketByteBufs.copy(buf.asByteBuf());
+                ServerPlayNetworking.send(teammate, channelName, bufNew);
+                LOGGER.info("%s send remove ping to %s".formatted(senderName, teammateName));
             }
         }
     }

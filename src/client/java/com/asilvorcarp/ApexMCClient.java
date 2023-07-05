@@ -20,7 +20,6 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
-import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
@@ -28,10 +27,10 @@ import java.util.Objects;
 
 import static com.asilvorcarp.ApexMC.LOGGER;
 import static com.asilvorcarp.NetworkingConstants.PING_PACKET;
-import static com.asilvorcarp.RenderHandler.XY2Vec3d;
+import static com.asilvorcarp.NetworkingConstants.REMOVE_PING_PACKET;
 
 public class ApexMCClient implements ClientModInitializer {
-    public static final double MAX_REACH = 256.0D;
+    public static final double MAX_REACH = 512.0D;
     private static KeyBinding pingKeyBinding;
 
     @Override
@@ -51,6 +50,10 @@ public class ApexMCClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(PING_PACKET, (client, handler, buf, responseSender) -> {
             // Everything in this lambda is run on the render thread
             pingReceiver(buf);
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(REMOVE_PING_PACKET, (client, handler, buf, responseSender) -> {
+            removePingReceiver(buf);
         });
     }
 
@@ -77,8 +80,11 @@ public class ApexMCClient implements ClientModInitializer {
         sendPingToServer(p);
     }
 
+    // also show some info about the thing pinging on
+
     private static Vec3d pingDirection(MinecraftClient client, ClientPlayerEntity player, float tickDelta,
                                        Vec3d dir, boolean includeFluids) {
+        assert client.world != null;
         assert client.cameraEntity != null;
         HitResult hit = raycast(client.cameraEntity, MAX_REACH, tickDelta, includeFluids, dir);
 
@@ -105,17 +111,30 @@ public class ApexMCClient implements ClientModInitializer {
         }
 
         if (pingPos != null) {
-            LOGGER.debug("Ping at " + pingPos);
-            PingPoint p = new PingPoint(pingPos, player.getEntityName());
-            addPointToRenderer(p);
-            sendPingToServer(p);
+            pingPosition(player, pingPos);
         }
 
         return pingPos;
     }
+    private static void pingPosition(ClientPlayerEntity player, Vec3d pingPos) {
+        LOGGER.debug("Ping at " + pingPos);
+        PingPoint p = new PingPoint(pingPos, player.getEntityName());
+        RenderHandler renderer = RenderHandler.getInstance();
+        if(renderer.isOnPing()){
+           renderer.removeOnPing();
+           sendRemovePingToServer(renderer.getOnPing());
+        } else {
+            addPointToRenderer(p);
+            sendPingToServer(p);
+        }
+    }
 
     private static void addPointToRenderer(PingPoint p) {
         RenderHandler.getInstance().addPing(p);
+    }
+
+    private void removePointAtRenderer(PingPoint p) {
+        RenderHandler.getInstance().removePing(p);
     }
 
     private static HitResult raycast(
@@ -138,10 +157,18 @@ public class ApexMCClient implements ClientModInitializer {
     public static void sendPingToServer(PingPoint p) {
         try {
             PacketByteBuf buf = p.toPacketByteBuf();
-            ClientPlayNetworking.send(NetworkingConstants.PING_PACKET, buf);
+            ClientPlayNetworking.send(PING_PACKET, buf);
         } catch (IOException e) {
             LOGGER.error("Fail to send ping packet to server", e);
-            return;
+        }
+    }
+
+    private static void sendRemovePingToServer(PingPoint p){
+        try {
+            PacketByteBuf buf = p.toPacketByteBuf();
+            ClientPlayNetworking.send(REMOVE_PING_PACKET, buf);
+        } catch (IOException e) {
+            LOGGER.error("Fail to send remove ping packet to server", e);
         }
     }
 
@@ -152,7 +179,16 @@ public class ApexMCClient implements ClientModInitializer {
             LOGGER.debug("Received ping at " + p.pos.toString());
         } catch (Exception e) {
             LOGGER.error("Fail to deserialize the ping packet received", e);
-            return;
+        }
+    }
+
+    private void removePingReceiver(PacketByteBuf buf) {
+        try {
+            var p = PingPoint.fromPacketByteBuf(buf);
+            removePointAtRenderer(p);
+            LOGGER.debug("Received remove ping at " + p.pos.toString());
+        } catch (Exception e) {
+            LOGGER.error("Fail to deserialize the remove ping packet received", e);
         }
     }
 }

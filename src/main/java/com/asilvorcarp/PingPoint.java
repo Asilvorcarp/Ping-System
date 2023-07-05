@@ -9,6 +9,7 @@ import net.minecraft.util.math.Vec3d;
 import java.awt.*;
 import java.io.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import static com.asilvorcarp.ApexMC.LOGGER;
 
@@ -16,12 +17,14 @@ public class PingPoint implements Serializable {
     // TODO config for this
     // zero means never
     public static long SecondsToVanish = 0;
+    public UUID id;
     public Vec3d pos;
     public String owner;
     public Color color;
     public LocalDateTime createTime;
 
     public PingPoint(Vec3d pos, String owner) {
+        this.id = UUID.randomUUID();
         this.pos = pos;
         this.owner = owner;
         // default color
@@ -30,6 +33,7 @@ public class PingPoint implements Serializable {
     }
 
     public PingPoint(Vec3d pos, String owner, Color color) {
+        this.id = UUID.randomUUID();
         this.pos = pos;
         this.owner = owner;
         this.color = color;
@@ -47,6 +51,7 @@ public class PingPoint implements Serializable {
     @Serial
     private void writeObject(ObjectOutputStream stream)
             throws IOException {
+        stream.writeObject(id);
         stream.writeDouble(pos.x);
         stream.writeDouble(pos.y);
         stream.writeDouble(pos.z);
@@ -59,6 +64,7 @@ public class PingPoint implements Serializable {
     @Serial
     private void readObject(ObjectInputStream stream)
             throws IOException, ClassNotFoundException {
+        id = (UUID) stream.readObject();
         double x = stream.readDouble();
         double y = stream.readDouble();
         double z = stream.readDouble();

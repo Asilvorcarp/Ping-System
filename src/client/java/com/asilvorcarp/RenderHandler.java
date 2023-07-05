@@ -6,6 +6,7 @@ import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.Color4f;
 import fi.dy.masa.malilib.util.EntityUtils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
@@ -16,7 +17,9 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
 import java.lang.Math;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.asilvorcarp.ApexMC.LOGGER;
@@ -26,12 +29,18 @@ public class RenderHandler implements IRenderer {
     public static final boolean DEBUG = false;
     // TODO be able to config this
     public static final float ICON_RESIZER = 1f;
+    // format: 0xAARRGGBB
+    public static final int INFO_COLOR = 0xFFeb9d39;
     private static final RenderHandler INSTANCE = new RenderHandler();
     private final MinecraftClient mc;
+    // the count for debug
     public int debug_count;
     // safe for multi-thread
     public HashMap<String, CopyOnWriteArrayList<PingPoint>> pings;
     public int pingNumEach;
+    // the ping that is pointed to
+    private PingPoint onPing;
+
     private static final Identifier PING_BASIC = new Identifier(ApexMC.MOD_ID, "textures/ping/ping_basic.png");
 
     public RenderHandler() {
@@ -40,6 +49,7 @@ public class RenderHandler implements IRenderer {
         this.pings = new HashMap<>();
         // TODO be able to config this
         this.pingNumEach = 3;
+        this.onPing = null;
     }
 
     public static RenderHandler getInstance() {
@@ -58,6 +68,14 @@ public class RenderHandler implements IRenderer {
             }
             pingList.add(p);
         }
+    }
+
+    public PingPoint getOnPing() {
+        return onPing;
+    }
+
+    public boolean isOnPing() {
+        return onPing != null;
     }
 
     @Override
@@ -86,6 +104,7 @@ public class RenderHandler implements IRenderer {
 
     @Override
     public void onRenderGameOverlayPost(DrawContext drawContext) {
+        boolean setOnPing = false;
         for (var entry : this.pings.entrySet()) {
             var owner = entry.getKey();
             for (var ping : entry.getValue()) {
@@ -105,7 +124,21 @@ public class RenderHandler implements IRenderer {
                 Vector2d v2 = getIconCenter(width, height, cameraDirection, fov, cameraPos, targetPos);
                 // render the icon
                 renderIconHUD(v2.x, v2.y, ping);
+                // render info if pointing at it (and don't do twice)
+                if (!setOnPing) {
+                    var mid = new Vector2d((double) width / 2, (double) height / 2);
+                    var fromMid = v2.sub(mid);
+                    if (fromMid.length() <= mid.length() / 25) {
+                        renderInfoHUD((int) (width / 2.0 + 5), (int) (height / 2.0 + 5), ping, drawContext);
+                        // set lookingAtPing
+                        onPing = ping;
+                        setOnPing = true;
+                    }
+                }
             }
+        }
+        if (!setOnPing) {
+            onPing = null;
         }
     }
 
@@ -245,6 +278,29 @@ public class RenderHandler implements IRenderer {
         tessellator.draw();
     }
 
+    private void renderInfoHUD(int cx, int cy, PingPoint ping, DrawContext dc) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        var player = client.player;
+        if (player == null) {
+            return;
+        }
+        List<String> textLines = new ArrayList<>();
+        var playerPos = player.getPos();
+        var dist = playerPos.distanceTo(ping.pos);
+        textLines.add("%.0f m".formatted(dist));
+        if (!ping.owner.equals(player.getEntityName())) {
+            textLines.add("%s".formatted(ping.owner));
+        }
+        // render
+        TextRenderer textRenderer = client.textRenderer;
+        for (String line : textLines) {
+            dc.drawText(textRenderer, line, cx, cy, INFO_COLOR, true);
+            cy += textRenderer.fontHeight + 2;
+        }
+        var keyIndicator = "Cancel (Z)";
+        dc.drawText(textRenderer, keyIndicator, cx, cy, 0xFFFFFFFF, true);
+    }
+
     public void renderOverlays(MatrixStack matrixStack, Matrix4f projMatrix, MinecraftClient mc) {
         Entity entity = EntityUtils.getCameraEntity();
 
@@ -317,5 +373,13 @@ public class RenderHandler implements IRenderer {
 
     public void updateData(MinecraftClient mc) {
         // do nothing?
+    }
+
+    public void removeOnPing() {
+        pings.get(onPing.owner).removeIf((p -> p.id.equals(onPing.id)));
+    }
+
+    public void removePing(PingPoint p) {
+        pings.get(p.owner).removeIf((lhs -> lhs.id.equals(p.id)));
     }
 }
