@@ -277,7 +277,7 @@ public class RenderHandler implements IRenderer {
         tessellator.draw();
     }
 
-    private void renderInfoHUD(int cx, int cy, PingPoint ping, DrawContext dc) {
+    private void renderInfoHUD(int topLeftX, int topLeftY, PingPoint ping, DrawContext dc) {
         MinecraftClient client = MinecraftClient.getInstance();
         var player = client.player;
         if (player == null) {
@@ -293,11 +293,11 @@ public class RenderHandler implements IRenderer {
         // render
         TextRenderer textRenderer = client.textRenderer;
         for (String line : textLines) {
-            dc.drawText(textRenderer, line, cx, cy, INFO_COLOR, true);
-            cy += textRenderer.fontHeight + 2;
+            dc.drawText(textRenderer, line, topLeftX, topLeftY, INFO_COLOR, true);
+            topLeftY += textRenderer.fontHeight + 2;
         }
         var keyIndicator = "Cancel (Z)";
-        dc.drawText(textRenderer, keyIndicator, cx, cy, 0xFFFFFFFF, true);
+        dc.drawText(textRenderer, keyIndicator, topLeftX, topLeftY, 0xFFFFFFFF, true);
     }
 
     public void renderOverlays(MatrixStack matrixStack, Matrix4f projMatrix, MinecraftClient mc) {
