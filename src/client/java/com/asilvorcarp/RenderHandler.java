@@ -22,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static com.asilvorcarp.ApexMC.Vec3dToVector3d;
 
 public class RenderHandler implements IRenderer {
+    public static final boolean DEBUG = true;
     // TODO be able to config this
     public static final float ICON_RESIZER = 1.5f;
     private static final RenderHandler INSTANCE = new RenderHandler();
@@ -45,7 +46,6 @@ public class RenderHandler implements IRenderer {
     }
 
     public void addPing(PingPoint p) {
-        pingNumEach = 11;
         if (pings.get(p.owner) == null) {
             var list = new CopyOnWriteArrayList<PingPoint>();
             list.add(p);
@@ -97,12 +97,15 @@ public class RenderHandler implements IRenderer {
                 Vec3d targetPos = ping.pos;
                 Vec3d targetDir = targetPos.subtract(cameraPos);
                 Vec3d cameraDirection = client.cameraEntity.getRotationVec(1.0f);
+                // support fly/sprint fov
                 double fov = client.options.getFov().getValue();
-                double angleSize = fov / height;
+                if (client.player != null) {
+                    fov *= client.player.getFovMultiplier();
+                }
 
                 Vector2d v2 = getIconCenter(width, height, targetDir, cameraDirection, fov, cameraPos, targetPos);
 
-                renderIconHUD((int) v2.x, (int) v2.y, ping);
+                renderIconHUD(v2.x, v2.y, ping);
             }
         }
     }
@@ -137,6 +140,7 @@ public class RenderHandler implements IRenderer {
                                    double fov, Vec3d cameraPos, Vec3d targetPos) {
         // TODO implement
 
+        double halfWidth = width / 2.0, halfHeight = height / 2.0;
         Matrix4d viewMatrix = new Matrix4d();
         // eye position
         Vector3d eyeVector = Vec3dToVector3d(cameraPos);
@@ -144,10 +148,12 @@ public class RenderHandler implements IRenderer {
         Vector3d centerVector = Vec3dToVector3d(cameraPos.add(cameraDir));
         // 'up' in world space
         Vector3d upVector = new Vector3d(0, 1, 0);
-        // FIXME: NaN
-//        if(Vec3dToVector3d(cameraDir).angle(upVector)==0){
-//            centerVector.x = centerVector.x + 0.001;
-//        }
+        double angleCosAbs = Math.abs(Vec3dToVector3d(cameraDir).angleCos(upVector));
+        if (angleCosAbs == 1.0) {
+            if (DEBUG)
+                System.out.println("fuck");
+            // TODO fix NaN
+        }
         // the look-at transformation
         viewMatrix.setLookAt(eyeVector, centerVector, upVector);
         Vector3d tarVector = Vec3dToVector3d(targetPos);
@@ -163,42 +169,49 @@ public class RenderHandler implements IRenderer {
         double w = tarPosCamSpace4.w;
         Vector3d tarPosCam = new Vector3d(x, y, z);
 
-        System.out.printf("fov: %.2f\n", fov);
-        System.out.printf("tarPosCamSpace4: %.2f %.2f %.2f, %.2f\n", x, y, z, w);
+        if (DEBUG) {
+            System.out.printf("fov: %.2f\n", fov);
+            System.out.printf("tarPosCamSpace4: %.2f %.2f %.2f, %.2f\n", x, y, z, w);
+        }
 
         double degreePerPixel = fov / height;
         double aspectRatio = (float) width / height;
-        fov = Math.toRadians(fov);
+        double radFov = Math.toRadians(fov);
         double near = 0.1;
         double far = Double.POSITIVE_INFINITY;
-//        float far = Float.POSITIVE_INFINITY;
 
-        Matrix4d projectionMatrix = new Matrix4d().setPerspective(fov, aspectRatio, near, far);
+        Matrix4d projectionMatrix = new Matrix4d().setPerspective(radFov, aspectRatio, near, far);
         Vector4d ndc = new Vector4d();
         projectionMatrix.transform(tarPosCamSpace4, ndc);
         ndc.div(ndc.w);
+        // the target is at back
+        boolean atBack = Math.signum(tarPosCamSpace4.z) == 1.0;
 
-        System.out.printf("ndc: %.2f, %.2f, %.2f, %.2f\n", ndc.x, ndc.y, ndc.z, ndc.w);
+        if (DEBUG)
+            System.out.printf("ndc: %.2f, %.2f, %.2f, %.2f\n", ndc.x, ndc.y, ndc.z, ndc.w);
 
-        // viewport matrix
-        double halfWidth = width / 2.0, halfHeight = height / 2.0;
-        Matrix4d viewportMatrix = new Matrix4d();
-        viewportMatrix.identity();
-        viewportMatrix.m00(halfWidth);
-        viewportMatrix.m11(halfHeight);
-//        viewportMatrix.m30(width * 0.5f + viewportX);
-//        viewportMatrix.m31(height * 0.5f + viewportY);
-
-        // 将NDC坐标转换到屏幕空间
+        // 将NDC坐标转换到屏幕空间 sx, sy
         // the xyz from middle of screen, increase when right up forward
-        Vector4d screenSpace = new Vector4d();
-        viewportMatrix.transform(ndc, screenSpace);
-        screenSpace.div(screenSpace.w);
+        double sx = ndc.x * halfWidth, sy = ndc.y * halfHeight;
+        if (DEBUG)
+            System.out.printf("sx sy: %.2f, %.2f\n", sx, sy);
+
+        // TODO need to scale but why???
+        double scaler = 2.80 * 90 / fov; // 2.80 for 90
+        sx = sx / scaler;
+        sy = sy / scaler;
 
         // the x,y from the middle of the screen, increase when right down
-        double mx = screenSpace.x / degreePerPixel, my = -screenSpace.y / degreePerPixel;
+        double mx = sx / degreePerPixel, my = -sy / degreePerPixel;
 
-        // limit to screen border // TODO add margin and arrow
+        // if at back, move to border
+        if (atBack) {
+            var tempMx = halfWidth * -Math.signum(mx);
+            my = my / mx * tempMx;
+            mx = tempMx;
+        }
+        // limit to screen border
+        // TODO add margin and arrow
         double xm_new = mx, ym_new = my;
         if (Math.abs(mx) > halfWidth) {
             xm_new = halfWidth * Math.signum(mx);
@@ -210,76 +223,24 @@ public class RenderHandler implements IRenderer {
         return new Vector2d(xm_new + halfWidth, ym_new + halfHeight);
     }
 
-    // TODO optimize this
-    private Vector2d getIconCenter2(int width, int height, Vec3d targetDir,
-                                    Vec3d cameraDirection, double angleSize, Vec3d cameraPos, Vec3d targetPos) {
-        Vector3f verticalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
-        verticalRotationAxis.cross(new Vector3f(0, 1, 0));
-        verticalRotationAxis.normalize();
-        Vector3f horizontalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
-        horizontalRotationAxis.cross(verticalRotationAxis);
-        horizontalRotationAxis.normalize();
-        verticalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
-        verticalRotationAxis.cross(horizontalRotationAxis);
-        cameraDirection.normalize();
-
-        Vector2d ret = new Vector2d(10, 10);
-        double minTheta = 90;
-
-        // FIXME!!! need to abandon this bad idea
-        outerLoop:
-        for (int x = 0; x < width; x += 4) {
-            for (int y = 0; y < height; y += 4) {
-                Vec3d tarHat = map(angleSize, cameraDirection, horizontalRotationAxis, verticalRotationAxis, x, y, width, height).normalize();
-                var theta = Math.acos(tarHat.dotProduct(targetDir) / (tarHat.length() * targetDir.length()));
-                theta = Math.toDegrees(theta);
-                if (theta < minTheta) {
-                    minTheta = theta;
-                    ret.x = x;
-                    ret.y = y;
-                }
-//                if (theta <= 1) {
-//                    break outerLoop;
-//                }
-            }
-        }
-
-//        System.out.println(ret);
-
-//        Vec3d tarHat1 = map(angleSize, cameraDirection, horizontalRotationAxis, verticalRotationAxis, 0, 0, width, height);
-//        Vec3d tarHat2 = map(angleSize, cameraDirection, horizontalRotationAxis, verticalRotationAxis, width / 2, height / 2, width, height);
-//        System.out.println(tarHat1);
-//        System.out.println(tarHat2);
-
-        return ret;
-    }
-
     /**
      * cx, cy: center of the icon
      * ping: the PingPoint
      */
-    private void renderIconHUD(int cx, int cy, PingPoint ping) {
+    private void renderIconHUD(double cx, double cy, PingPoint ping) {
         // TODO show distance and owner
         double zLevel = 0;
         var realResizer = ICON_RESIZER / 32;
         float u = 0, v = 0, width = 256 * realResizer, height = 256 * realResizer;
         float pixelWidth = 0.00390625F / realResizer;
 
-        int x = (int) (cx - width / 2);
-        int y = (int) (cy - height / 2);
-
-//        INSTANCE.debug_count++;
-//        if (INSTANCE.debug_count >= 160) {
-//            INSTANCE.debug_count = 0;
-//            System.out.println("fuck overlay post");
-//            System.out.println(x);
-//            System.out.println(y);
-//        }
+        double x = cx - width / 2;
+        double y = cy - height / 2;
 
         // TODO add background
         RenderUtils.bindTexture(PING_BASIC);
 
-//            RenderUtils.drawTexturedRect(0, 0, 0, 0, 128, 128);
+        // the following is RenderUtils.drawTexturedRect(0, 0, 0, 0, 128, 128);
 
         RenderSystem.setShader(GameRenderer::getPositionTexProgram);
         RenderSystem.applyModelViewMatrix();
