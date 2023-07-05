@@ -20,6 +20,7 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
+import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
@@ -27,6 +28,7 @@ import java.util.Objects;
 
 import static com.asilvorcarp.ApexMC.LOGGER;
 import static com.asilvorcarp.NetworkingConstants.PING_PACKET;
+import static com.asilvorcarp.RenderHandler.XY2Vec3d;
 
 public class ApexMCClient implements ClientModInitializer {
     public static final double MAX_REACH = 256.0D;
@@ -63,6 +65,16 @@ public class ApexMCClient implements ClientModInitializer {
 
             // config for include fluids
             pingDirection(client, player, tickDelta, cameraDirection, true);
+
+            int width = client.getWindow().getScaledWidth();
+            int height = client.getWindow().getScaledHeight();
+            Vec3d dir2 = XY2Vec3d(new Vector2i(0, height / 2));
+            pingDirection(client, player, 1.0f, dir2, true);
+            int parts = 10;
+            for (int i = 0; i < parts; i++) {
+                dir2 = XY2Vec3d(new Vector2i(width * i / (parts * 2), height / 2));
+                pingDirection(client, player, 1.0f, dir2, true);
+            }
         }
     }
 
@@ -103,7 +115,7 @@ public class ApexMCClient implements ClientModInitializer {
         }
 
         if (pingPos != null) {
-            LOGGER.debug("Ping at "+ pingPos);
+            LOGGER.debug("Ping at " + pingPos);
             PingPoint p = new PingPoint(pingPos, player.getEntityName());
             addPointToRenderer(p);
             sendPingToServer(p);
@@ -127,7 +139,7 @@ public class ApexMCClient implements ClientModInitializer {
         return entity.getWorld().raycast(new RaycastContext(
                 entity.getCameraPosVec(tickDelta),
                 end,
-                RaycastContext.ShapeType.COLLIDER,
+                RaycastContext.ShapeType.OUTLINE,
                 includeFluids ? RaycastContext.FluidHandling.ANY : RaycastContext.FluidHandling.NONE,
                 entity
         ));
@@ -147,7 +159,7 @@ public class ApexMCClient implements ClientModInitializer {
         try {
             var p = PingPoint.fromPacketByteBuf(buf);
             addPointToRenderer(p);
-            LOGGER.debug("Received ping at "+ p.pos.toString());
+            LOGGER.debug("Received ping at " + p.pos.toString());
         } catch (Exception e) {
             LOGGER.error("Fail to deserialize the ping packet received", e);
             return;

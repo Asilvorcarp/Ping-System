@@ -19,6 +19,8 @@ import java.lang.Math;
 import java.util.HashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static com.asilvorcarp.ApexMC.Vec3dToVector3d;
+
 public class RenderHandler implements IRenderer {
     // TODO be able to config this
     public static final float ICON_RESIZER = 1.5f;
@@ -43,6 +45,7 @@ public class RenderHandler implements IRenderer {
     }
 
     public void addPing(PingPoint p) {
+        pingNumEach = 100;
         if (pings.get(p.owner) == null) {
             var list = new CopyOnWriteArrayList<PingPoint>();
             list.add(p);
@@ -80,39 +83,6 @@ public class RenderHandler implements IRenderer {
         return new Vec3d(temp2);
     }
 
-    private static Vector2d mapBack(double anglePerPixel, Vec3d cameraDir, Vec3d targetDir, Vector3f horAx, Vector3f verAx,
-                                    int width, int height, Vec3d cameraPos, Vec3d targetPos) {
-        // TODO implement
-
-        Matrix4d viewMatrix = new Matrix4d();
-        Vector3d eyeVector = ApexMC.Vec3dToVector3d(cameraPos);
-        Vector3d centerVector = ApexMC.Vec3dToVector3d(cameraDir).normalize();
-        Vec3d leftVec = map(anglePerPixel, cameraDir, horAx, verAx, 0, 2 / height, width, height);
-        Vector3d leftVector = ApexMC.Vec3dToVector3d(leftVec);
-        Vector3d upVector = centerVector.cross(leftVector).normalize();
-        viewMatrix.setLookAt(eyeVector, centerVector, upVector);
-        Vector4d worldPositionVector = new Vector4d(ApexMC.Vec3dToVector3d(targetPos), 1);
-        Vector4d transformedPositionVector = new Vector4d();
-        viewMatrix.transform(worldPositionVector, transformedPositionVector);
-        double x_prime = transformedPositionVector.x;
-        double y_prime = transformedPositionVector.y;
-
-        double halfWidth = width / 2.0, halfHeight = height / 2.0;
-        // the x,y from the middle of the screen
-        double xm = x_prime - halfWidth, ym = y_prime - halfHeight;
-
-        // limit to screen border // TODO add margin
-        double xm_new = xm, ym_new = ym;
-        if (Math.abs(xm) > halfWidth) {
-            xm_new = halfWidth * Math.signum(xm);
-            ym_new = ym / xm * xm_new;
-        } else if (Math.abs(ym) > halfHeight) {
-            ym_new = halfHeight * Math.signum(ym);
-            xm_new = xm / ym * ym_new;
-        }
-        return new Vector2d(xm_new + halfWidth, ym_new + halfHeight);
-    }
-
     @Override
     public void onRenderGameOverlayPost(DrawContext drawContext) {
         for (var entry : this.pings.entrySet()) {
@@ -130,7 +100,7 @@ public class RenderHandler implements IRenderer {
                 double fov = client.options.getFov().getValue();
                 double angleSize = fov / height;
 
-                Vector2d v2 = getIconCenter2(width, height, targetDir, cameraDirection, angleSize, cameraPos, targetPos);
+                Vector2d v2 = getIconCenter(width, height, targetDir, cameraDirection, angleSize, cameraPos, targetPos);
 
                 renderIconHUD((int) v2.x, (int) v2.y, ping);
             }
@@ -163,20 +133,61 @@ public class RenderHandler implements IRenderer {
     }
 
     @NotNull
-    private Vector2d getIconCenter(int width, int height, Vec3d targetDir, Vec3d cameraDirection,
-                                   double angleSize, Vec3d cameraPos, Vec3d targetPos) {
-        Vector3f verticalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
-        verticalRotationAxis.cross(new Vector3f(0, 1, 0));
-        verticalRotationAxis.normalize();
-        Vector3f horizontalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
-        horizontalRotationAxis.cross(verticalRotationAxis);
-        horizontalRotationAxis.normalize();
-        verticalRotationAxis = ApexMC.Vec3dToV3f(cameraDirection);
-        verticalRotationAxis.cross(horizontalRotationAxis);
+    private Vector2d getIconCenter(int width, int height, Vec3d targetDir, Vec3d cameraDir,
+                                   double anglePerPixel, Vec3d cameraPos, Vec3d targetPos) {
+        // TODO implement
 
-        var v2 = mapBack(angleSize, cameraDirection, targetDir, horizontalRotationAxis, verticalRotationAxis,
-                width, height, cameraPos, targetPos);
-        return v2;
+        Matrix4d viewMatrix = new Matrix4d();
+        // eye position
+        Vector3d eyeVector = Vec3dToVector3d(cameraPos);
+        // the center it is looking at (world coordinates)
+        Vector3d centerVector = Vec3dToVector3d(cameraPos.add(cameraDir));
+        // 'up' in world space
+        Vector3d upVector = new Vector3d(0, 1, 0);
+        if(Vec3dToVector3d(cameraDir).angle(upVector)==0){
+            centerVector.x
+        }
+        // the look-at transformation
+        viewMatrix.setLookAt(eyeVector, centerVector, upVector);
+        Vector3d tarVector = Vec3dToVector3d(targetPos);
+        Vector4d worldPositionVector = new Vector4d(tarVector, 1);
+        Vector4d tarPosCamSpace = new Vector4d();
+        viewMatrix.transform(worldPositionVector, tarPosCamSpace);
+        tarPosCamSpace.div(tarPosCamSpace.w);
+        // target position in camera space
+        // increase when right up back
+        double x = tarPosCamSpace.x;
+        double y = tarPosCamSpace.y;
+        double z = -tarPosCamSpace.z;
+
+        System.out.printf("tarPosCamSpace: %.2f %.2f %.2f\n", x, y, z);
+
+//        float aspectRatio = 16.0f / 9.0f;
+//        float fov = (float) Math.toRadians(60.0);
+//        float near = 0.1f;
+//        float far = 100.0f;
+//
+//        Matrix4f projectionMatrix = new Matrix4f().perspective(fov, aspectRatio, near, far);
+        // the angle moved with dir x/y, increase when right up
+        double mxk = Math.atan2(x, Math.sqrt(y * y + z * z));
+        double myk = Math.atan2(y, z);
+        mxk = Math.toDegrees(mxk);
+        myk = Math.toDegrees(myk);
+
+        // the x,y from the middle of the screen, increase when right down
+        double mx = mxk / anglePerPixel, my = -myk / anglePerPixel;
+
+        // limit to screen border // TODO add margin
+        double halfWidth = width / 2.0, halfHeight = height / 2.0;
+        double xm_new = mx, ym_new = my;
+        if (Math.abs(mx) > halfWidth) {
+            xm_new = halfWidth * Math.signum(mx);
+            ym_new = my / mx * xm_new;
+        } else if (Math.abs(my) > halfHeight) {
+            ym_new = halfHeight * Math.signum(my);
+            xm_new = mx / my * ym_new;
+        }
+        return new Vector2d(xm_new + halfWidth, ym_new + halfHeight);
     }
 
     // TODO optimize this
