@@ -248,7 +248,6 @@ public class RenderHandler implements IRenderer {
      * ping: the PingPoint
      */
     private void renderIconHUD(double cx, double cy, PingPoint ping) {
-        // TODO show distance and owner
         double zLevel = 0;
         var realResizer = ICON_RESIZER / 32;
         float u = 0, v = 0, width = 256 * realResizer, height = 256 * realResizer;
@@ -320,7 +319,6 @@ public class RenderHandler implements IRenderer {
     }
 
     private static void highlightPing(PingPoint ping, MinecraftClient mc) {
-        // TODO show owner name
         Vec3d cameraPos = mc.gameRenderer.getCamera().getPos();
         double x = ping.pos.x - cameraPos.x;
         double y = ping.pos.y - cameraPos.y;

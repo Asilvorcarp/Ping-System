@@ -26,3 +26,8 @@ Pings at night:
 
 malilib: [https://www.curseforge.com/minecraft/mc-mods/malilib](https://www.curseforge.com/minecraft/mc-mods/malilib)
 
+## Todo
+
+- [ ] config for mod
+- [ ] ping entity
+- [ ] fix NaN
