@@ -40,7 +40,7 @@ public class ApexMCClient implements ClientModInitializer {
         pingKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.apex_mc.ping", // The translation key of the keybinding's name
                 InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
-                GLFW.GLFW_KEY_I, // The keycode of the key
+                GLFW.GLFW_KEY_Z, // The keycode of the key
                 "category.apex_mc.apex" // The translation key of the keybinding's category.
         ));
 
