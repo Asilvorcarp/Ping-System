@@ -88,23 +88,21 @@ public class RenderHandler implements IRenderer {
         for (var entry : this.pings.entrySet()) {
             var owner = entry.getKey();
             for (var ping : entry.getValue()) {
-                // get cx cy on camera
                 MinecraftClient client = MinecraftClient.getInstance();
                 int width = client.getWindow().getScaledWidth();
                 int height = client.getWindow().getScaledHeight();
                 assert client.cameraEntity != null;
                 Vec3d cameraPos = client.cameraEntity.getPos();
                 Vec3d targetPos = ping.pos;
-                Vec3d targetDir = targetPos.subtract(cameraPos);
                 Vec3d cameraDirection = client.cameraEntity.getRotationVec(1.0f);
-                // support fly/sprint fov
+                // get real fly/sprint fov
                 double fov = client.options.getFov().getValue();
                 if (client.player != null) {
                     fov *= client.player.getFovMultiplier();
                 }
-
-                Vector2d v2 = getIconCenter(width, height, targetDir, cameraDirection, fov, cameraPos, targetPos);
-
+                // get the icon center on screen
+                Vector2d v2 = getIconCenter(width, height, cameraDirection, fov, cameraPos, targetPos);
+                // render the icon
                 renderIconHUD(v2.x, v2.y, ping);
             }
         }
@@ -136,9 +134,9 @@ public class RenderHandler implements IRenderer {
     }
 
     @NotNull
-    private Vector2d getIconCenter(int width, int height, Vec3d targetDir, Vec3d cameraDir,
+    private Vector2d getIconCenter(int width, int height, Vec3d cameraDir,
                                    double fov, Vec3d cameraPos, Vec3d targetPos) {
-        // TODO implement
+        // FIXME why is it above the highlight block?
 
         double halfWidth = width / 2.0, halfHeight = height / 2.0;
         Matrix4d viewMatrix = new Matrix4d();
@@ -190,7 +188,7 @@ public class RenderHandler implements IRenderer {
         if (DEBUG)
             System.out.printf("ndc: %.2f, %.2f, %.2f, %.2f\n", ndc.x, ndc.y, ndc.z, ndc.w);
 
-        // 将NDC坐标转换到屏幕空间 sx, sy
+        // NDC to screen space: sx, sy
         // the xyz from middle of screen, increase when right up forward
         double sx = ndc.x * halfWidth, sy = ndc.y * halfHeight;
         if (DEBUG)
