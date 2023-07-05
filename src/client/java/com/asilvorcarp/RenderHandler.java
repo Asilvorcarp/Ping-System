@@ -162,9 +162,6 @@ public class RenderHandler implements IRenderer {
         tarPosCamSpace.div(tarPosCamSpace.w);
         // target position in camera space
         // increase when right up back
-        double x = tarPosCamSpace.x;
-        double y = tarPosCamSpace.y;
-        double z = tarPosCamSpace.z;
 
         if (DEBUG) {
             System.out.printf("fov: %.2f\n", fov);
