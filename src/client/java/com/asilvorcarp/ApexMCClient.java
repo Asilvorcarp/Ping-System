@@ -66,15 +66,13 @@ public class ApexMCClient implements ClientModInitializer {
             // config for include fluids
             pingDirection(client, player, tickDelta, cameraDirection, true);
 
-            int width = client.getWindow().getScaledWidth();
-            int height = client.getWindow().getScaledHeight();
-            Vec3d dir2 = XY2Vec3d(new Vector2i(0, height / 2));
-            pingDirection(client, player, 1.0f, dir2, true);
-            int parts = 10;
-            for (int i = 0; i < parts; i++) {
-                dir2 = XY2Vec3d(new Vector2i(width * i / (parts * 2), height / 2));
-                pingDirection(client, player, 1.0f, dir2, true);
-            }
+//            int width = client.getWindow().getScaledWidth();
+//            int height = client.getWindow().getScaledHeight();
+//            int parts = 10;
+//            for (int i = 0; i < parts; i++) {
+//                Vec3d dir2 = XY2Vec3d(new Vector2i(width * i / (parts * 2), height / 2));
+//                pingDirection(client, player, 1.0f, dir2, true);
+//            }
         }
     }
 

@@ -45,7 +45,7 @@ public class RenderHandler implements IRenderer {
     }
 
     public void addPing(PingPoint p) {
-        pingNumEach = 100;
+        pingNumEach = 11;
         if (pings.get(p.owner) == null) {
             var list = new CopyOnWriteArrayList<PingPoint>();
             list.add(p);
@@ -100,7 +100,7 @@ public class RenderHandler implements IRenderer {
                 double fov = client.options.getFov().getValue();
                 double angleSize = fov / height;
 
-                Vector2d v2 = getIconCenter(width, height, targetDir, cameraDirection, angleSize, cameraPos, targetPos);
+                Vector2d v2 = getIconCenter(width, height, targetDir, cameraDirection, fov, cameraPos, targetPos);
 
                 renderIconHUD((int) v2.x, (int) v2.y, ping);
             }
@@ -134,7 +134,7 @@ public class RenderHandler implements IRenderer {
 
     @NotNull
     private Vector2d getIconCenter(int width, int height, Vec3d targetDir, Vec3d cameraDir,
-                                   double anglePerPixel, Vec3d cameraPos, Vec3d targetPos) {
+                                   double fov, Vec3d cameraPos, Vec3d targetPos) {
         // TODO implement
 
         Matrix4d viewMatrix = new Matrix4d();
@@ -144,41 +144,61 @@ public class RenderHandler implements IRenderer {
         Vector3d centerVector = Vec3dToVector3d(cameraPos.add(cameraDir));
         // 'up' in world space
         Vector3d upVector = new Vector3d(0, 1, 0);
-        if(Vec3dToVector3d(cameraDir).angle(upVector)==0){
-            centerVector.x
-        }
+        // FIXME: NaN
+//        if(Vec3dToVector3d(cameraDir).angle(upVector)==0){
+//            centerVector.x = centerVector.x + 0.001;
+//        }
         // the look-at transformation
         viewMatrix.setLookAt(eyeVector, centerVector, upVector);
         Vector3d tarVector = Vec3dToVector3d(targetPos);
         Vector4d worldPositionVector = new Vector4d(tarVector, 1);
-        Vector4d tarPosCamSpace = new Vector4d();
-        viewMatrix.transform(worldPositionVector, tarPosCamSpace);
-        tarPosCamSpace.div(tarPosCamSpace.w);
+        Vector4d tarPosCamSpace4 = new Vector4d();
+        viewMatrix.transform(worldPositionVector, tarPosCamSpace4);
+        tarPosCamSpace4.div(tarPosCamSpace4.w);
         // target position in camera space
         // increase when right up back
-        double x = tarPosCamSpace.x;
-        double y = tarPosCamSpace.y;
-        double z = -tarPosCamSpace.z;
+        double x = tarPosCamSpace4.x;
+        double y = tarPosCamSpace4.y;
+        double z = tarPosCamSpace4.z;
+        double w = tarPosCamSpace4.w;
+        Vector3d tarPosCam = new Vector3d(x, y, z);
 
-        System.out.printf("tarPosCamSpace: %.2f %.2f %.2f\n", x, y, z);
+        System.out.printf("fov: %.2f\n", fov);
+        System.out.printf("tarPosCamSpace4: %.2f %.2f %.2f, %.2f\n", x, y, z, w);
 
-//        float aspectRatio = 16.0f / 9.0f;
-//        float fov = (float) Math.toRadians(60.0);
-//        float near = 0.1f;
-//        float far = 100.0f;
-//
-//        Matrix4f projectionMatrix = new Matrix4f().perspective(fov, aspectRatio, near, far);
-        // the angle moved with dir x/y, increase when right up
-        double mxk = Math.atan2(x, Math.sqrt(y * y + z * z));
-        double myk = Math.atan2(y, z);
-        mxk = Math.toDegrees(mxk);
-        myk = Math.toDegrees(myk);
+        double degreePerPixel = fov / height;
+        double aspectRatio = (float) width / height;
+        fov = Math.toRadians(fov);
+        double near = 0.1;
+        double far = Double.POSITIVE_INFINITY;
+//        float far = Float.POSITIVE_INFINITY;
+
+        Matrix4d projectionMatrix = new Matrix4d().setPerspective(fov, aspectRatio, near, far);
+        Vector4d ndc = new Vector4d();
+        projectionMatrix.transform(tarPosCamSpace4, ndc);
+        ndc.div(ndc.w);
+
+        System.out.printf("ndc: %.2f, %.2f, %.2f, %.2f\n", ndc.x, ndc.y, ndc.z, ndc.w);
+
+        // viewport matrix
+        double halfWidth = width / 2.0, halfHeight = height / 2.0;
+        Matrix4d viewportMatrix = new Matrix4d();
+        viewportMatrix.identity();
+        viewportMatrix.m00(halfWidth);
+        viewportMatrix.m11(halfHeight);
+//        viewportMatrix.m30(width * 0.5f + viewportX);
+//        viewportMatrix.m31(height * 0.5f + viewportY);
+
+        // 将NDC坐标转换到屏幕空间
+        // the xyz from middle of screen, increase when right up forward
+        Vector4d screenSpace = new Vector4d();
+        viewportMatrix.transform(ndc, screenSpace);
+        screenSpace.div(screenSpace.w);
 
         // the x,y from the middle of the screen, increase when right down
-        double mx = mxk / anglePerPixel, my = -myk / anglePerPixel;
+        double mx = screenSpace.x / degreePerPixel, my = -screenSpace.y / degreePerPixel;
 
-        // limit to screen border // TODO add margin
-        double halfWidth = width / 2.0, halfHeight = height / 2.0;
+        // limit to screen border // TODO add margin and arrow
         double xm_new = mx, ym_new = my;
         if (Math.abs(mx) > halfWidth) {
             xm_new = halfWidth * Math.signum(mx);
