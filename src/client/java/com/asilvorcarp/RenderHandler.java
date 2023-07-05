@@ -19,6 +19,7 @@ import java.lang.Math;
 import java.util.HashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static com.asilvorcarp.ApexMC.LOGGER;
 import static com.asilvorcarp.ApexMC.Vec3dToVector3d;
 
 public class RenderHandler implements IRenderer {
@@ -136,8 +137,6 @@ public class RenderHandler implements IRenderer {
     @NotNull
     private Vector2d getIconCenter(int width, int height, Vec3d cameraDir,
                                    double fov, Vec3d cameraPos, Vec3d targetPos) {
-        // FIXME why is it above the highlight block?
-
         double halfWidth = width / 2.0, halfHeight = height / 2.0;
         Matrix4d viewMatrix = new Matrix4d();
         // eye position
@@ -155,25 +154,23 @@ public class RenderHandler implements IRenderer {
         // the look-at transformation
         viewMatrix.setLookAt(eyeVector, centerVector, upVector);
         Vector3d tarVector = Vec3dToVector3d(targetPos);
-        tarVector.y -= 1.618; // TODO but why???
+        // TODO but why???
+        tarVector.y -= 1.618;
         Vector4d worldPositionVector = new Vector4d(tarVector, 1);
-        Vector4d tarPosCamSpace4 = new Vector4d();
-        viewMatrix.transform(worldPositionVector, tarPosCamSpace4);
-        tarPosCamSpace4.div(tarPosCamSpace4.w);
+        Vector4d tarPosCamSpace = new Vector4d();
+        viewMatrix.transform(worldPositionVector, tarPosCamSpace);
+        tarPosCamSpace.div(tarPosCamSpace.w);
         // target position in camera space
         // increase when right up back
-        double x = tarPosCamSpace4.x;
-        double y = tarPosCamSpace4.y;
-        double z = tarPosCamSpace4.z;
-        double w = tarPosCamSpace4.w;
-        Vector3d tarPosCam = new Vector3d(x, y, z);
+        double x = tarPosCamSpace.x;
+        double y = tarPosCamSpace.y;
+        double z = tarPosCamSpace.z;
 
         if (DEBUG) {
             System.out.printf("fov: %.2f\n", fov);
-            System.out.printf("tarPosCamSpace4: %.2f %.2f %.2f, %.2f\n", x, y, z, w);
+            LOGGER.debug("tarPosCamSpace: " + tarPosCamSpace);
         }
 
-        double degreePerPixel = fov / height;
         double aspectRatio = (float) width / height;
         double radFov = Math.toRadians(fov);
         double near = 0.1;
@@ -181,10 +178,10 @@ public class RenderHandler implements IRenderer {
 
         Matrix4d projectionMatrix = new Matrix4d().setPerspective(radFov, aspectRatio, near, far);
         Vector4d ndc = new Vector4d();
-        projectionMatrix.transform(tarPosCamSpace4, ndc);
+        projectionMatrix.transform(tarPosCamSpace, ndc);
         ndc.div(ndc.w);
         // the target is at back
-        boolean atBack = Math.signum(tarPosCamSpace4.z) == 1.0;
+        boolean atBack = Math.signum(tarPosCamSpace.z) == 1.0;
 
         if (DEBUG)
             System.out.printf("ndc: %.2f, %.2f, %.2f, %.2f\n", ndc.x, ndc.y, ndc.z, ndc.w);
