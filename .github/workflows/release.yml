@@ -3,8 +3,11 @@
 # certain platforms or Java versions, and provides a first line of defence
 # against bad commits.
 
-name: build
-on: [pull_request, push]
+name: release
+on:
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   build:
@@ -14,8 +17,7 @@ jobs:
         java: [
           17,    # Current Java LTS & minimum supported by Minecraft
         ]
-        # and run on both Linux and Windows
-        os: [ubuntu-22.04, windows-2022]
+        os: [ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     steps:
       - name: checkout repository
@@ -40,16 +42,17 @@ jobs:
           path: build/libs/
       - uses: Kir-Antipov/mc-publish@v3.3
         with:
-          # Only include this section if you wish to publish
-          # your assets on Modrinth.
           modrinth-id: RECCOz9u
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
 
-          # Only include this section if you wish to publish
-          # your assets on CurseForge.
           curseforge-id: 884820
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
-          # Only include this section if you wish to publish
-          # your assets on GitHub.
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+          loaders: |
+            fabric
+
+          retry-attempts: 3
+          retry-delay: 10000
+          fail-mode: warn
