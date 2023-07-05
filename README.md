@@ -12,11 +12,15 @@ Send signal to your team for communication.
 
 Press hotkey again on the Ping Point to cancel it.
 
-Todo:
+## Images
 
-- [x] show distance
-- [x] show owner
-- [x] press again to cancel
+A ping from teammate:
+
+![pingFromTeammate](images/pingFromTeammate.png)
+
+Pings at night:
+
+![pingAtNight](images/pingAtNight.png)
 
 ## Dependencies
 
