@@ -22,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static com.asilvorcarp.ApexMC.Vec3dToVector3d;
 
 public class RenderHandler implements IRenderer {
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
     // TODO be able to config this
     public static final float ICON_RESIZER = 1f;
     private static final RenderHandler INSTANCE = new RenderHandler();
