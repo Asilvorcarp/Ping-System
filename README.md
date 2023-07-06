@@ -29,5 +29,8 @@ malilib: [https://www.curseforge.com/minecraft/mc-mods/malilib](https://www.curs
 ## Todo
 
 - [ ] config for mod
+- [ ] support 1.19
 - [ ] ping entity
 - [ ] fix NaN
+- [ ] automatic pathfinding
+- [ ] show on minimap
