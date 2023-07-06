@@ -1,3 +1,7 @@
+// two place to configure:
+// gradle.properties & fabric.mod.json
+// TODO make the pattern expand
+
 plugins {
     id 'fabric-loom' version '1.2-SNAPSHOT'
     id 'maven-publish'
@@ -20,6 +24,7 @@ repositories {
     maven { url 'https://masa.dy.fi/maven' }
     maven { url 'https://maven.terraformersmc.com/releases/' }
     maven { url 'https://plugins.gradle.org/m2/' }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 }
 
 loom {
@@ -34,6 +39,8 @@ loom {
 
 }
 
+project.ext.jomlVersion = "1.10.5"
+
 dependencies {
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -43,6 +50,7 @@ dependencies {
     // new
     implementation "com.google.code.findbugs:jsr305:3.0.2"
     modImplementation "fi.dy.masa.malilib:malilib-fabric-${project.minecraft_version}:${project.malilib_version}"
+    implementation "org.joml:joml:${jomlVersion}"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
@@ -106,7 +114,7 @@ modrinth {
 //	versionName = 'My awesome release' // The version title. If not specified, it'll use the version number
     projectId = 'RECCOz9u' // The ID of your Modrinth project. Slugs will not work.
 	uploadFile = remapJar // Tells Minotaur to use the remapped jar
-	gameVersions = ['1.20.1'] // An array of game versions the version supports
+	gameVersions = [project.minecraft_version] // An array of game versions the version supports
 	loaders = ['fabric'] // Self-explanatory.
 	dependencies = [
 			new ModDependency('P7dR8mSH', 'required') // Creates a new required dependency on Fabric API
