@@ -7,12 +7,12 @@ import fi.dy.masa.malilib.util.Color4f;
 import fi.dy.masa.malilib.util.EntityUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3f;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
@@ -79,7 +79,7 @@ public class RenderHandler implements IRenderer {
     }
 
     @Override
-    public void onRenderWorldLast(MatrixStack matrixStack, Matrix4f projMatrix) {
+    public void onRenderWorldLast(MatrixStack matrixStack, net.minecraft.util.math.Matrix4f projMatrix) {
         if (this.mc.world != null && this.mc.player != null && !this.mc.options.hudHidden) {
             this.renderOverlays(matrixStack, projMatrix, this.mc);
         }
@@ -99,11 +99,15 @@ public class RenderHandler implements IRenderer {
         Quaternionfc rot2 = getDegreesQuaternion(horizontalRotationAxis, horizontalRotation);
         temp2.rotate(rot1);
         temp2.rotate(rot2);
-        return new Vec3d(temp2);
+        return new Vec3d(Vector3fToVec3f(temp2));
+    }
+
+    private static Vec3f Vector3fToVec3f(Vector3f v){
+        return new Vec3f(v.x, v.y, v.z);
     }
 
     @Override
-    public void onRenderGameOverlayPost(DrawContext drawContext) {
+    public void onRenderGameOverlayPost(MatrixStack matrixStack) {
         boolean setOnPing = false;
         for (var entry : this.pings.entrySet()) {
             var owner = entry.getKey();
@@ -129,7 +133,7 @@ public class RenderHandler implements IRenderer {
                     var mid = new Vector2d((double) width / 2, (double) height / 2);
                     var fromMid = v2.sub(mid);
                     if (fromMid.length() <= mid.length() / 25) {
-                        renderInfoHUD((int) (width / 2.0 + 5), (int) (height / 2.0 + 5), ping, drawContext);
+                        renderInfoHUD((int) (width / 2.0 + 5), (int) (height / 2.0 + 5), ping, matrixStack);
                         // set lookingAtPing
                         onPing = ping;
                         setOnPing = true;
@@ -259,9 +263,10 @@ public class RenderHandler implements IRenderer {
         // TODO add background
         RenderUtils.bindTexture(PING_BASIC);
 
-        // the following is RenderUtils.drawTexturedRect(0, 0, 0, 0, 128, 128);
+        // the following is
+        RenderUtils.drawTexturedRect(0, 0, 0, 0, 128, 128);
 
-        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.applyModelViewMatrix();
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
@@ -277,7 +282,7 @@ public class RenderHandler implements IRenderer {
         tessellator.draw();
     }
 
-    private void renderInfoHUD(int topLeftX, int topLeftY, PingPoint ping, DrawContext dc) {
+    private void renderInfoHUD(int topLeftX, int topLeftY, PingPoint ping, MatrixStack ms) {
         MinecraftClient client = MinecraftClient.getInstance();
         var player = client.player;
         if (player == null) {
@@ -291,16 +296,18 @@ public class RenderHandler implements IRenderer {
             textLines.add("%s".formatted(ping.owner));
         }
         // render
+        // reference: RenderUtils.renderText();
         TextRenderer textRenderer = client.textRenderer;
         for (String line : textLines) {
-            dc.drawText(textRenderer, line, topLeftX, topLeftY, INFO_COLOR, true);
+            textRenderer.drawWithShadow(ms, line, topLeftX, topLeftY, INFO_COLOR);
             topLeftY += textRenderer.fontHeight + 2;
         }
         var keyIndicator = "Cancel (Z)";
-        dc.drawText(textRenderer, keyIndicator, topLeftX, topLeftY, 0xFFFFFFFF, true);
+        textRenderer.drawWithShadow(ms, keyIndicator, topLeftX, topLeftY, 0xFFFFFFFF);
     }
 
-    public void renderOverlays(MatrixStack matrixStack, Matrix4f projMatrix, MinecraftClient mc) {
+    public void renderOverlays(MatrixStack matrixStack, net.minecraft.util.math.Matrix4f projMatrix,
+                               MinecraftClient mc) {
         Entity entity = EntityUtils.getCameraEntity();
 
         if (entity == null) {
@@ -349,7 +356,7 @@ public class RenderHandler implements IRenderer {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
 
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.applyModelViewMatrix();
         buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 

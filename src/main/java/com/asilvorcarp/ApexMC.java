@@ -6,8 +6,8 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
+import net.minecraft.util.registry.BuiltinRegistries;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -40,13 +40,13 @@ public class ApexMC implements ModInitializer {
     public static boolean ENABLE_TEAMS = false;
 
     public static final Identifier PING_LOCATION_SOUND = new Identifier("apex_mc:ping_location");
-    public static SoundEvent PING_LOCATION_EVENT = SoundEvent.of(PING_LOCATION_SOUND);
+    public static SoundEvent PING_LOCATION_EVENT = new SoundEvent(PING_LOCATION_SOUND);
     public static final Identifier PING_ITEM_SOUND = new Identifier("apex_mc:ping_item");
-    public static SoundEvent PING_ITEM_EVENT = SoundEvent.of(PING_ITEM_SOUND);
+    public static SoundEvent PING_ITEM_EVENT = new SoundEvent(PING_ITEM_SOUND);
     public static final Identifier PING_ENEMY_SOUND = new Identifier("apex_mc:ping_enemy");
-    public static SoundEvent PING_ENEMY_EVENT = SoundEvent.of(PING_ENEMY_SOUND);
+    public static SoundEvent PING_ENEMY_EVENT = new SoundEvent(PING_ENEMY_SOUND);
     public static final Identifier MOZAMBIQUE_LIFELINE_SOUND = new Identifier("apex_mc:mozambique_lifeline");
-    public static SoundEvent MOZAMBIQUE_LIFELINE_EVENT = SoundEvent.of(MOZAMBIQUE_LIFELINE_SOUND);
+    public static SoundEvent MOZAMBIQUE_LIFELINE_EVENT = new SoundEvent(MOZAMBIQUE_LIFELINE_SOUND);
     // TODO be able to config this
     public static final SoundEvent DEFAULT_SOUND_EVENT = PING_LOCATION_EVENT;
     // maybe SoundEvents.BLOCK_ANVIL_BREAK
@@ -70,10 +70,10 @@ public class ApexMC implements ModInitializer {
         }));
 
         // register sound events
-        Registry.register(Registries.SOUND_EVENT, PING_LOCATION_SOUND, PING_LOCATION_EVENT);
-        Registry.register(Registries.SOUND_EVENT, PING_ITEM_SOUND, PING_ITEM_EVENT);
-        Registry.register(Registries.SOUND_EVENT, PING_ENEMY_SOUND, PING_ENEMY_EVENT);
-        Registry.register(Registries.SOUND_EVENT, MOZAMBIQUE_LIFELINE_SOUND, MOZAMBIQUE_LIFELINE_EVENT);
+        Registry.register(Registry.SOUND_EVENT, PING_LOCATION_SOUND, PING_LOCATION_EVENT);
+        Registry.register(Registry.SOUND_EVENT, PING_ITEM_SOUND, PING_ITEM_EVENT);
+        Registry.register(Registry.SOUND_EVENT, PING_ENEMY_SOUND, PING_ENEMY_EVENT);
+        Registry.register(Registry.SOUND_EVENT, MOZAMBIQUE_LIFELINE_SOUND, MOZAMBIQUE_LIFELINE_EVENT);
     }
 
     public static void multicastPing(ServerPlayerEntity sender, Identifier channelName, PacketByteBuf buf) {
