@@ -30,7 +30,8 @@ malilib: [https://www.curseforge.com/minecraft/mc-mods/malilib](https://www.curs
 
 ## Todo
 
-- [ ] config for mod
+- [ ] config for mod with mod menu
+- [ ] confirm ping of teammate
 - [ ] ping entity
 - [ ] fix NaN
 - [ ] automatic pathfinding
