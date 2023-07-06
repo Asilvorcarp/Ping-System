@@ -1,10 +1,12 @@
-# ApexMC
+<p align="center">
+    <img src="./src/main/resources/assets/apex_mc/icon.png" alt="ApexMC" width="200"/> 
+</p>
 
-![icon](./src/main/resources/assets/apex_mc/icon.png)
+<h1 align="center">ApexMC</h1>
 
 Make MC Apex Again.
 
-## 1. Ping System
+## Ping System
 
 Default hotkey: `z`
 
