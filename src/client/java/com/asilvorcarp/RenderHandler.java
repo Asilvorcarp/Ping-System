@@ -264,7 +264,7 @@ public class RenderHandler implements IRenderer {
         RenderUtils.bindTexture(PING_BASIC);
 
         // the following is
-        RenderUtils.drawTexturedRect(0, 0, 0, 0, 128, 128);
+        // RenderUtils.drawTexturedRect(0, 0, 0, 0, 128, 128);
 
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.applyModelViewMatrix();
