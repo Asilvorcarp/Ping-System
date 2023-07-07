@@ -56,8 +56,8 @@ public class RenderHandler implements IRenderer {
             pings.put(p.owner, list);
         } else {
             var pingList = pings.get(p.owner);
-            if (pingList.size() >= ModMenuConfig.pingNumEach) {
-                pingList.subList(0, pingList.size() - ModMenuConfig.pingNumEach + 1).clear();
+            if (pingList.size() >= ModConfig.pingNumEach) {
+                pingList.subList(0, pingList.size() - ModConfig.pingNumEach + 1).clear();
             }
             pingList.add(p);
         }
@@ -246,7 +246,7 @@ public class RenderHandler implements IRenderer {
      */
     private void renderIconHUD(double cx, double cy, PingPoint ping) {
         double zLevel = 0;
-        var realResizer = ModMenuConfig.iconSize / 32;
+        var realResizer = ModConfig.iconSize / 32;
         float u = 0, v = 0, width = 256 * realResizer, height = 256 * realResizer;
         float pixelWidth = 0.00390625F / realResizer;
 
@@ -292,7 +292,7 @@ public class RenderHandler implements IRenderer {
         // reference: RenderUtils.renderText();
         TextRenderer textRenderer = client.textRenderer;
         for (String line : textLines) {
-            textRenderer.drawWithShadow(ms, line, topLeftX, topLeftY, ModMenuConfig.INFO_COLOR);
+            textRenderer.drawWithShadow(ms, line, topLeftX, topLeftY, ModConfig.infoColor);
             topLeftY += textRenderer.fontHeight + 2;
         }
         var keyIndicator = "Cancel (Z)";
@@ -311,7 +311,7 @@ public class RenderHandler implements IRenderer {
             var owner = entry.getKey();
             var pingList = entry.getValue();
             // let it vanish
-            pingList.removeIf(p -> p.shouldVanish(ModMenuConfig.secondsToVanish));
+            pingList.removeIf(p -> p.shouldVanish(ModConfig.secondsToVanish));
             for (var ping : pingList) {
                 highlightPing(ping, mc);
             }

@@ -22,7 +22,7 @@
 			"com.asilvorcarp.ApexMCClient"
 		],
 		"modmenu": [
-			"com.asilvorcarp.ModMenuConfig"
+			"com.asilvorcarp.ModConfig"
 		]
 	},
 	"mixins": [

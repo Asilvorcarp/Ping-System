@@ -6,24 +6,26 @@ import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
+
+import java.awt.*;
 
 import static com.asilvorcarp.ApexMC.MOD_ID;
 
-public class ModMenuConfig implements ModMenuApi, ConfigScreenFactory<Screen> {
+public class ModConfig implements ModMenuApi, ConfigScreenFactory<Screen> {
     // format: 0xAARRGGBB
-    public static final int INFO_COLOR = 0xFFeb9d39;
+    public static int infoColor = 0xFFeb9d39;
     public static boolean includeFluids = false;
     public static float iconSize = 1f;
     // the num of pings save for each player (work only in client side)
     public static int pingNumEach;
-    public static String defaultSound = "apex_mc:ping_location";
     // 0 means never, only work at your client side
     public static long secondsToVanish = 0;
+    public static Color highlightColor = new Color(247 / 256f, 175 / 256f, 53 / 256f);
+    public static byte soundIdx = 0;
 
     public static void setIncludeFluids(boolean includeFluids) {
-        ModMenuConfig.includeFluids = includeFluids;
+        ModConfig.includeFluids = includeFluids;
     }
 
     @Override
@@ -44,7 +46,7 @@ public class ModMenuConfig implements ModMenuApi, ConfigScreenFactory<Screen> {
         general.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config." + MOD_ID + ".includeFluids"), includeFluids)
                 .setDefaultValue(false)
                 .setTooltip(Text.translatable("config." + MOD_ID + ".includeFluids.description"))
-                .setSaveConsumer(ModMenuConfig::setIncludeFluids)
+                .setSaveConsumer(ModConfig::setIncludeFluids)
                 .build());
 
         // Delay Buffer

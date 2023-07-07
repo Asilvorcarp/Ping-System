@@ -66,7 +66,7 @@ public class ApexMCClient implements ClientModInitializer {
             assert client.cameraEntity != null;
             Vec3d cameraDirection = client.cameraEntity.getRotationVec(tickDelta);
 
-            pingDirection(client, player, tickDelta, cameraDirection, ModMenuConfig.includeFluids);
+            pingDirection(client, player, tickDelta, cameraDirection, ModConfig.includeFluids);
         }
     }
 
@@ -74,7 +74,7 @@ public class ApexMCClient implements ClientModInitializer {
         assert client.cameraEntity != null;
         Vec3d cameraPos = client.cameraEntity.getPos();
         Vec3d pingPos = cameraPos.add(dir.multiply(dist));
-        PingPoint p = new PingPoint(pingPos, player.getEntityName());
+        PingPoint p = new PingPoint(pingPos, player.getEntityName(), ModConfig.highlightColor, ModConfig.soundIdx);
         addPointToRenderer(p);
         sendPingToServer(p);
     }
@@ -115,13 +115,14 @@ public class ApexMCClient implements ClientModInitializer {
 
         return pingPos;
     }
+
     private static void pingPosition(ClientPlayerEntity player, Vec3d pingPos) {
         LOGGER.debug("Ping at " + pingPos);
-        PingPoint p = new PingPoint(pingPos, player.getEntityName());
+        PingPoint p = new PingPoint(pingPos, player.getEntityName(), ModConfig.highlightColor, ModConfig.soundIdx);
         RenderHandler renderer = RenderHandler.getInstance();
-        if(renderer.isOnPing()){
-           renderer.removeOnPing();
-           sendRemovePingToServer(renderer.getOnPing());
+        if (renderer.isOnPing()) {
+            renderer.removeOnPing();
+            sendRemovePingToServer(renderer.getOnPing());
         } else {
             addPointToRenderer(p);
             sendPingToServer(p);
@@ -162,7 +163,7 @@ public class ApexMCClient implements ClientModInitializer {
         }
     }
 
-    private static void sendRemovePingToServer(PingPoint p){
+    private static void sendRemovePingToServer(PingPoint p) {
         try {
             PacketByteBuf buf = p.toPacketByteBuf();
             ClientPlayNetworking.send(REMOVE_PING_PACKET, buf);

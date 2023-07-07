@@ -10,24 +10,21 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class PingPoint implements Serializable {
-    private static final Color defaultHighlightColor = new Color(247 / 256f, 175 / 256f, 53 / 256f);
     public UUID id;
     public Vec3d pos;
     public String owner;
+    // the highlight color
     public Color color;
     // the sound index
     public byte sound;
     public LocalDateTime createTime;
 
-    public PingPoint(Vec3d pos, String owner) {
-        this(pos, owner, defaultHighlightColor);
-    }
-
-    public PingPoint(Vec3d pos, String owner, Color color) {
+    public PingPoint(Vec3d pos, String owner, Color color, byte soundIdx) {
         this.id = UUID.randomUUID();
         this.pos = pos;
         this.owner = owner;
         this.color = color;
+        this.sound = soundIdx;
         this.createTime = LocalDateTime.now();
     }
 
