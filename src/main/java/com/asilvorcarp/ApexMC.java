@@ -1,26 +1,26 @@
 package com.asilvorcarp;
 
 import net.fabricmc.api.ModInitializer;
-
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 
 import static com.asilvorcarp.NetworkingConstants.PING_PACKET;
@@ -35,16 +35,14 @@ public class ApexMC implements ModInitializer {
     public static ArrayList<ApexTeam> teams = new ArrayList<>();
     public static boolean ENABLE_TEAMS = false;
 
-//    public string newSounds = []
-    public static final Identifier PING_LOCATION_SOUND = new Identifier("apex_mc:ping_location");
-    public static SoundEvent PING_LOCATION_EVENT = new SoundEvent(PING_LOCATION_SOUND);
-    public static final Identifier PING_ITEM_SOUND = new Identifier("apex_mc:ping_item");
-    public static SoundEvent PING_ITEM_EVENT = new SoundEvent(PING_ITEM_SOUND);
-    public static final Identifier PING_ENEMY_SOUND = new Identifier("apex_mc:ping_enemy");
-    public static SoundEvent PING_ENEMY_EVENT = new SoundEvent(PING_ENEMY_SOUND);
-    public static final Identifier MOZAMBIQUE_LIFELINE_SOUND = new Identifier("apex_mc:mozambique_lifeline");
-    public static SoundEvent MOZAMBIQUE_LIFELINE_EVENT = new SoundEvent(MOZAMBIQUE_LIFELINE_SOUND);
-    // maybe SoundEvents.BLOCK_ANVIL_BREAK
+    public static String[] newSounds = {
+            "apex_mc:ping_location",
+            "apex_mc:ping_item",
+            "apex_mc:ping_enemy",
+            "apex_mc:mozambique_lifeline",
+    };
+    // currently include newSounds and SoundEvents.BLOCK_ANVIL_BREAK
+    public static ArrayList<SoundEvent> soundEventsForPing;
 
     @Override
     public void onInitialize() {
@@ -53,8 +51,7 @@ public class ApexMC implements ModInitializer {
         // Proceed with mild caution.
         LOGGER.info("Make MC Apex Again!");
 
-        // teams.add(new ApexTeam("Asc", "Eyn"));
-        // TODO add to team command, save state to file
+        // TODO (later) add team command, save state to file
 
         // register receiver
         ServerPlayNetworking.registerGlobalReceiver(NetworkingConstants.PING_PACKET, ((server, player, handler, buf, responseSender) -> {
@@ -64,11 +61,15 @@ public class ApexMC implements ModInitializer {
             multicastRemovePing(player, REMOVE_PING_PACKET, buf);
         }));
 
-        // register sound events
-        Registry.register(Registry.SOUND_EVENT, PING_LOCATION_SOUND, PING_LOCATION_EVENT);
-        Registry.register(Registry.SOUND_EVENT, PING_ITEM_SOUND, PING_ITEM_EVENT);
-        Registry.register(Registry.SOUND_EVENT, PING_ENEMY_SOUND, PING_ENEMY_EVENT);
-        Registry.register(Registry.SOUND_EVENT, MOZAMBIQUE_LIFELINE_SOUND, MOZAMBIQUE_LIFELINE_EVENT);
+        // register all new sound events
+        soundEventsForPing = new ArrayList<>();
+        Arrays.stream(newSounds).forEach((soundStr) -> {
+            Identifier soundId = new Identifier(soundStr);
+            SoundEvent soundEvent = new SoundEvent(soundId);
+            Registry.register(Registry.SOUND_EVENT, soundId, soundEvent);
+            soundEventsForPing.add(soundEvent);
+        });
+        soundEventsForPing.add(SoundEvents.BLOCK_ANVIL_BREAK);
     }
 
     public static void multicastPing(ServerPlayerEntity sender, Identifier channelName, PacketByteBuf buf) {
@@ -78,7 +79,7 @@ public class ApexMC implements ModInitializer {
             SoundEvent soundEvent;
             try {
                 var p = PingPoint.fromPacketByteBuf(buf);
-                soundEvent = soundIdToEvent(p.sound);
+                soundEvent = soundIdxToEvent(p.sound);
             } catch (Exception e) {
                 LOGGER.error("server fail to deserialize the ping packet", e);
                 return;
@@ -96,7 +97,7 @@ public class ApexMC implements ModInitializer {
                         1f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
                 );
                 // packet skip oneself
-                if (Objects.equals(teammateName, senderName)){
+                if (Objects.equals(teammateName, senderName)) {
                     continue;
                 }
                 var bufNew = PacketByteBufs.copy(buf.asByteBuf());
@@ -106,9 +107,13 @@ public class ApexMC implements ModInitializer {
         }
     }
 
-    private static SoundEvent soundIdToEvent(String sound) {
-
-        return new SoundEvent(new Identifier(sound));
+    private static SoundEvent soundIdxToEvent(byte soundIdx) {
+        // if out of range, just return the first one
+        try {
+            return soundEventsForPing.get(soundIdx);
+        } catch (IndexOutOfBoundsException e) {
+            return soundEventsForPing.get(0);
+        }
     }
 
     public static void multicastRemovePing(ServerPlayerEntity sender, Identifier channelName, PacketByteBuf buf) {
@@ -119,7 +124,7 @@ public class ApexMC implements ModInitializer {
                 var senderName = sender.getEntityName();
                 var teammateName = teammate.getEntityName();
                 // packet skip oneself
-                if (Objects.equals(teammateName, senderName)){
+                if (Objects.equals(teammateName, senderName)) {
                     continue;
                 }
                 var bufNew = PacketByteBufs.copy(buf.asByteBuf());

@@ -15,8 +15,8 @@ public class PingPoint implements Serializable {
     public Vec3d pos;
     public String owner;
     public Color color;
-    // the sound id
-    public String sound;
+    // the sound index
+    public byte sound;
     public LocalDateTime createTime;
 
     public PingPoint(Vec3d pos, String owner) {
@@ -48,7 +48,7 @@ public class PingPoint implements Serializable {
         stream.writeDouble(pos.z);
         stream.writeObject(owner);
         stream.writeObject(color);
-        stream.writeObject(sound);
+        stream.writeByte(sound);
         stream.writeObject(createTime);
     }
 
@@ -63,7 +63,7 @@ public class PingPoint implements Serializable {
         pos = new Vec3d(x, y, z);
         owner = (String) stream.readObject();
         color = (Color) stream.readObject();
-        sound = (String) stream.readObject();
+        sound = stream.readByte();
         createTime = (LocalDateTime) stream.readObject();
     }
 

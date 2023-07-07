@@ -15,13 +15,10 @@ public class ModMenuConfig implements ModMenuApi, ConfigScreenFactory<Screen> {
     // format: 0xAARRGGBB
     public static final int INFO_COLOR = 0xFFeb9d39;
     public static boolean includeFluids = false;
-    // TODO be able to config this
     public static float iconSize = 1f;
     // the num of pings save for each player (work only in client side)
     public static int pingNumEach;
-    // TODO be able to config this
-    public static SoundEvent DEFAULT_SOUND_EVENT = ApexMC.PING_LOCATION_EVENT;
-    // TODO config for this
+    public static String defaultSound = "apex_mc:ping_location";
     // 0 means never, only work at your client side
     public static long secondsToVanish = 0;
 
