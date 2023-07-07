@@ -74,7 +74,7 @@ public class ApexMCClient implements ClientModInitializer {
         assert client.cameraEntity != null;
         Vec3d cameraPos = client.cameraEntity.getPos();
         Vec3d pingPos = cameraPos.add(dir.multiply(dist));
-        PingPoint p = new PingPoint(pingPos, player.getEntityName(), ModConfig.highlightColor, ModConfig.soundIdx);
+        PingPoint p = new PingPoint(pingPos, player.getEntityName(), ModConfig.highlightColor, ModConfig.soundIndex);
         addPointToRenderer(p);
         sendPingToServer(p);
     }
@@ -118,7 +118,7 @@ public class ApexMCClient implements ClientModInitializer {
 
     private static void pingPosition(ClientPlayerEntity player, Vec3d pingPos) {
         LOGGER.debug("Ping at " + pingPos);
-        PingPoint p = new PingPoint(pingPos, player.getEntityName(), ModConfig.highlightColor, ModConfig.soundIdx);
+        PingPoint p = new PingPoint(pingPos, player.getEntityName(), ModConfig.highlightColor, ModConfig.soundIndex);
         RenderHandler renderer = RenderHandler.getInstance();
         if (renderer.isOnPing()) {
             renderer.removeOnPing();
