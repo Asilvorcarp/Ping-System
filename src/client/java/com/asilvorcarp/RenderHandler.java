@@ -27,17 +27,12 @@ import static com.asilvorcarp.ApexMC.Vec3dToVector3d;
 
 public class RenderHandler implements IRenderer {
     public static final boolean DEBUG = false;
-    // TODO be able to config this
-    public static final float ICON_RESIZER = 1f;
-    // format: 0xAARRGGBB
-    public static final int INFO_COLOR = 0xFFeb9d39;
     private static final RenderHandler INSTANCE = new RenderHandler();
     private final MinecraftClient mc;
     // the count for debug
     public int debug_count;
     // safe for multi-thread
     public HashMap<String, CopyOnWriteArrayList<PingPoint>> pings;
-    public int pingNumEach;
     // the ping that is pointed to
     private PingPoint onPing;
 
@@ -47,8 +42,6 @@ public class RenderHandler implements IRenderer {
         this.mc = MinecraftClient.getInstance();
         this.debug_count = 0;
         this.pings = new HashMap<>();
-        // TODO be able to config this
-        this.pingNumEach = 3;
         this.onPing = null;
     }
 
@@ -63,8 +56,8 @@ public class RenderHandler implements IRenderer {
             pings.put(p.owner, list);
         } else {
             var pingList = pings.get(p.owner);
-            if (pingList.size() >= pingNumEach) {
-                pingList.subList(0, pingList.size() - pingNumEach + 1).clear();
+            if (pingList.size() >= ModMenuConfig.pingNumEach) {
+                pingList.subList(0, pingList.size() - ModMenuConfig.pingNumEach + 1).clear();
             }
             pingList.add(p);
         }
@@ -102,7 +95,7 @@ public class RenderHandler implements IRenderer {
         return new Vec3d(Vector3fToVec3f(temp2));
     }
 
-    private static Vec3f Vector3fToVec3f(Vector3f v){
+    private static Vec3f Vector3fToVec3f(Vector3f v) {
         return new Vec3f(v.x, v.y, v.z);
     }
 
@@ -253,7 +246,7 @@ public class RenderHandler implements IRenderer {
      */
     private void renderIconHUD(double cx, double cy, PingPoint ping) {
         double zLevel = 0;
-        var realResizer = ICON_RESIZER / 32;
+        var realResizer = ModMenuConfig.iconSize / 32;
         float u = 0, v = 0, width = 256 * realResizer, height = 256 * realResizer;
         float pixelWidth = 0.00390625F / realResizer;
 
@@ -299,7 +292,7 @@ public class RenderHandler implements IRenderer {
         // reference: RenderUtils.renderText();
         TextRenderer textRenderer = client.textRenderer;
         for (String line : textLines) {
-            textRenderer.drawWithShadow(ms, line, topLeftX, topLeftY, INFO_COLOR);
+            textRenderer.drawWithShadow(ms, line, topLeftX, topLeftY, ModMenuConfig.INFO_COLOR);
             topLeftY += textRenderer.fontHeight + 2;
         }
         var keyIndicator = "Cancel (Z)";
@@ -317,8 +310,8 @@ public class RenderHandler implements IRenderer {
         for (var entry : this.pings.entrySet()) {
             var owner = entry.getKey();
             var pingList = entry.getValue();
-            // let it die
-            pingList.removeIf(PingPoint::shouldVanish);
+            // let it vanish
+            pingList.removeIf(p -> p.shouldVanish(ModMenuConfig.secondsToVanish));
             for (var ping : pingList) {
                 highlightPing(ping, mc);
             }

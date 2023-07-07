@@ -6,16 +6,12 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.registry.BuiltinRegistries;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Position;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3d;
@@ -39,6 +35,7 @@ public class ApexMC implements ModInitializer {
     public static ArrayList<ApexTeam> teams = new ArrayList<>();
     public static boolean ENABLE_TEAMS = false;
 
+//    public string newSounds = []
     public static final Identifier PING_LOCATION_SOUND = new Identifier("apex_mc:ping_location");
     public static SoundEvent PING_LOCATION_EVENT = new SoundEvent(PING_LOCATION_SOUND);
     public static final Identifier PING_ITEM_SOUND = new Identifier("apex_mc:ping_item");
@@ -47,8 +44,6 @@ public class ApexMC implements ModInitializer {
     public static SoundEvent PING_ENEMY_EVENT = new SoundEvent(PING_ENEMY_SOUND);
     public static final Identifier MOZAMBIQUE_LIFELINE_SOUND = new Identifier("apex_mc:mozambique_lifeline");
     public static SoundEvent MOZAMBIQUE_LIFELINE_EVENT = new SoundEvent(MOZAMBIQUE_LIFELINE_SOUND);
-    // TODO be able to config this
-    public static final SoundEvent DEFAULT_SOUND_EVENT = PING_LOCATION_EVENT;
     // maybe SoundEvents.BLOCK_ANVIL_BREAK
 
     @Override
@@ -80,14 +75,22 @@ public class ApexMC implements ModInitializer {
         if (ENABLE_TEAMS) {
             // TODO implement teams
         } else {
+            SoundEvent soundEvent;
+            try {
+                var p = PingPoint.fromPacketByteBuf(buf);
+                soundEvent = soundIdToEvent(p.sound);
+            } catch (Exception e) {
+                LOGGER.error("server fail to deserialize the ping packet", e);
+                return;
+            }
             for (ServerPlayerEntity teammate : PlayerLookup.world((ServerWorld) sender.getWorld())) {
                 var senderName = sender.getEntityName();
                 var teammateName = teammate.getEntityName();
-                // play sound for all // TODO how to play for one
+                // play sound for all // TODO how to play for only one
                 teammate.getWorld().playSound(
                         null, // Player - if non-null, will play sound for every nearby player *except* the specified player
                         teammate.getBlockPos(), // The position of where the sound will come from
-                        DEFAULT_SOUND_EVENT,
+                        soundEvent,
                         SoundCategory.BLOCKS, // This determines which of the volume sliders affect this sound
                         1f, // Volume multiplier, 1 is normal, 0.5 is half volume, etc
                         1f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
@@ -101,6 +104,11 @@ public class ApexMC implements ModInitializer {
                 LOGGER.info("%s send ping to %s".formatted(senderName, teammateName));
             }
         }
+    }
+
+    private static SoundEvent soundIdToEvent(String sound) {
+
+        return new SoundEvent(new Identifier(sound));
     }
 
     public static void multicastRemovePing(ServerPlayerEntity sender, Identifier channelName, PacketByteBuf buf) {

@@ -66,8 +66,7 @@ public class ApexMCClient implements ClientModInitializer {
             assert client.cameraEntity != null;
             Vec3d cameraDirection = client.cameraEntity.getRotationVec(tickDelta);
 
-            // TODO add config for include fluids
-            pingDirection(client, player, tickDelta, cameraDirection, false);
+            pingDirection(client, player, tickDelta, cameraDirection, ModMenuConfig.includeFluids);
         }
     }
 
