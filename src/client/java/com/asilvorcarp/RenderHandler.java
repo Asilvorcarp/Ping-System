@@ -298,7 +298,12 @@ public class RenderHandler implements IRenderer {
             topLeftY += textRenderer.fontHeight + 2;
         }
         var hotkeyPath = KeyBindingHelper.getBoundKeyOf(pingKeyBinding).toString().split("\\.");
+        // enough for keyboard
         var hotkey = hotkeyPath[hotkeyPath.length - 1].toUpperCase();
+        // add "m" for mouse
+        if (hotkeyPath.length == 3 && hotkeyPath[1].equals("mouse")) {
+            hotkey = "M" + hotkey;
+        }
         var keyIndicator = "Cancel (" + hotkey + ")";
         textRenderer.drawWithShadow(ms, keyIndicator, topLeftX, topLeftY, 0xFFFFFFFF);
     }
