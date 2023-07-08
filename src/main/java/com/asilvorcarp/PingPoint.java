@@ -28,8 +28,12 @@ public class PingPoint implements Serializable {
         this.createTime = LocalDateTime.now();
     }
 
+    public PingPoint(Vec3d pos, String owner, int color, byte soundIdx) {
+        this(pos, owner, new Color(color), soundIdx);
+    }
+
     public boolean shouldVanish(long SecondsToVanish) {
-        if(SecondsToVanish == 0){
+        if (SecondsToVanish == 0) {
             return false;
         }
         return LocalDateTime.now().minusSeconds(SecondsToVanish).isAfter(createTime);

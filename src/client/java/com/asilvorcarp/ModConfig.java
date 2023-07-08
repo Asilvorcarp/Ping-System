@@ -23,19 +23,26 @@ public class ModConfig implements ModMenuApi, ConfigScreenFactory<Screen> {
             FabricLoader.getInstance().getConfigDir().toFile(),
             MOD_ID + ".properties");
     // the num of pings save for each player (work only in client side)
-    public static int pingNumEach = 3;
+    public static final int DEFAULT_pingNumEach = 1;
+    public static int pingNumEach = DEFAULT_pingNumEach;
     // whether we can ping on the fluid
-    public static boolean includeFluids = false;
+    public static final boolean DEFAULT_includeFluids = false;
+    public static boolean includeFluids = DEFAULT_includeFluids;
     // resize the icon hud
-    public static float iconSize = 1f;
+    public static final float DEFAULT_iconSize = 1f;
+    public static float iconSize = DEFAULT_iconSize;
     // info shown when looking at the ping point, format: 0xAARRGGBB
-    public static int infoColor = 0xFFeb9d39;
+    public static final int DEFAULT_infoColor = 0xFFEB9D39;
+    public static int infoColor = DEFAULT_infoColor;
     // 0 means never, only work at your client side
-    public static long secondsToVanish = 0;
-    // color of the highlight block
-    public static Color highlightColor = new Color(247 / 256f, 175 / 256f, 53 / 256f);
+    public static final long DEFAULT_secondsToVanish = 0;
+    public static long secondsToVanish = DEFAULT_secondsToVanish;
+    // color of the highlight block, format: 0xAARRGGBB
+    public static final int DEFAULT_highlightColor = 0xFFEB9D39;
+    public static int highlightColor = DEFAULT_highlightColor;
     // the index of the ping sound
-    public static byte soundIndex = 0;
+    public static final byte DEFAULT_soundIndex = 0;
+    public static byte soundIndex = DEFAULT_soundIndex;
 
     @Override
     public ConfigScreenFactory<Screen> getModConfigScreenFactory() {
@@ -51,16 +58,51 @@ public class ModConfig implements ModMenuApi, ConfigScreenFactory<Screen> {
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
         ConfigCategory general = builder.getOrCreateCategory(Text.translatable("config." + MOD_ID + ".general"));
 
+        // Ping num each
+        general.addEntry(entryBuilder.startIntField(Text.translatable("config." + MOD_ID + ".pingNumEach"), pingNumEach)
+                .setDefaultValue(DEFAULT_pingNumEach)
+                .setTooltip(Text.translatable("config." + MOD_ID + ".pingNumEach.description"))
+                .setSaveConsumer(ModConfig::setPingNumEach)
+                .build());
+
         // Toggle include fluids
         general.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config." + MOD_ID + ".includeFluids"), includeFluids)
-                .setDefaultValue(false)
+                .setDefaultValue(DEFAULT_includeFluids)
                 .setTooltip(Text.translatable("config." + MOD_ID + ".includeFluids.description"))
                 .setSaveConsumer(ModConfig::setIncludeFluids)
                 .build());
 
-        // sound index
+        // icon size
+        general.addEntry(entryBuilder.startFloatField(Text.translatable("config." + MOD_ID + ".iconSize"), iconSize)
+                .setDefaultValue(DEFAULT_iconSize)
+                .setTooltip(Text.translatable("config." + MOD_ID + ".iconSize.description"))
+                .setSaveConsumer(ModConfig::setIconSize)
+                .build());
+
+        // info color
+        general.addEntry(entryBuilder.startAlphaColorField(Text.translatable("config." + MOD_ID + ".infoColor"), infoColor)
+                .setDefaultValue(DEFAULT_infoColor)
+                .setTooltip(Text.translatable("config." + MOD_ID + ".infoColor.description"))
+                .setSaveConsumer(ModConfig::setInfoColor)
+                .build());
+
+        // seconds to vanish
+        general.addEntry(entryBuilder.startLongField(Text.translatable("config." + MOD_ID + ".secondsToVanish"), secondsToVanish)
+                .setDefaultValue(DEFAULT_secondsToVanish)
+                .setTooltip(Text.translatable("config." + MOD_ID + ".secondsToVanish.description"))
+                .setSaveConsumer(ModConfig::setSecondsToVanish)
+                .build());
+
+        // highlight color
+        general.addEntry(entryBuilder.startAlphaColorField(Text.translatable("config." + MOD_ID + ".highlightColor"), highlightColor)
+                .setDefaultValue(DEFAULT_highlightColor)
+                .setTooltip(Text.translatable("config." + MOD_ID + ".highlightColor.description"))
+                .setSaveConsumer(ModConfig::setHighlightColor)
+                .build());
+
+        // Sound index
         general.addEntry(entryBuilder.startIntField(Text.translatable("config." + MOD_ID + ".soundIndex"), soundIndex)
-                .setDefaultValue(0)
+                .setDefaultValue(DEFAULT_soundIndex)
                 .setTooltip(Text.translatable("config." + MOD_ID + ".soundIndex.description"))
                 .setSaveConsumer(ModConfig::setSoundIndex)
                 .build());
@@ -90,15 +132,15 @@ public class ModConfig implements ModMenuApi, ConfigScreenFactory<Screen> {
         ModConfig.pingNumEach = pingNumEach;
     }
 
-    public static long getSecondsToVanish() {
-        return secondsToVanish;
+    public static void setSecondsToVanish(long secondsToVanish) {
+        ModConfig.secondsToVanish = secondsToVanish;
     }
 
     public static void setInfoColor(int infoColor) {
         ModConfig.infoColor = infoColor;
     }
 
-    public static void setHighlightColor(Color highlightColor) {
+    public static void setHighlightColor(int highlightColor) {
         ModConfig.highlightColor = highlightColor;
     }
 
