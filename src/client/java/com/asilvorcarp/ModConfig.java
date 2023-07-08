@@ -82,6 +82,26 @@ public class ModConfig implements ModMenuApi, ConfigScreenFactory<Screen> {
         ModConfig.includeFluids = includeFluids;
     }
 
+    public static void setIconSize(float iconSize) {
+        ModConfig.iconSize = iconSize;
+    }
+
+    public static void setPingNumEach(int pingNumEach) {
+        ModConfig.pingNumEach = pingNumEach;
+    }
+
+    public static long getSecondsToVanish() {
+        return secondsToVanish;
+    }
+
+    public static void setInfoColor(int infoColor) {
+        ModConfig.infoColor = infoColor;
+    }
+
+    public static void setHighlightColor(Color highlightColor) {
+        ModConfig.highlightColor = highlightColor;
+    }
+
     public static void loadConfig(File file) {
         try {
             Properties cfg = new Properties();

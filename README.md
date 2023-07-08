@@ -8,7 +8,7 @@ Make MC Apex Again.
 
 ## Ping System
 
-Default hotkey: `z`
+Default hotkey: `c`
 
 Send signal to your team for communication.
 
@@ -31,6 +31,7 @@ malilib: [https://www.curseforge.com/minecraft/mc-mods/malilib](https://www.curs
 ## Todo
 
 - [ ] config for mod with mod menu
+- [ ] get current key for info
 - [ ] confirm ping of teammate
 - [ ] ping entity
 - [ ] fix NaN
