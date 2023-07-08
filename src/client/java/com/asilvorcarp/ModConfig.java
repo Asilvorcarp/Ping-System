@@ -152,8 +152,14 @@ public class ModConfig implements ModMenuApi, ConfigScreenFactory<Screen> {
             }
             cfg.load(new FileInputStream(file));
 
-            includeFluids = Boolean.parseBoolean(cfg.getProperty("includeFluids", "false"));
-            soundIndex = (byte) Integer.parseInt(cfg.getProperty("soundIndex", "0"));
+            pingNumEach = Integer.parseInt(cfg.getProperty("pingNumEach", String.valueOf(DEFAULT_pingNumEach)));
+            includeFluids = Boolean.parseBoolean(cfg.getProperty("includeFluids", String.valueOf(DEFAULT_includeFluids)));
+            iconSize = Float.parseFloat(cfg.getProperty("iconSize", String.valueOf(DEFAULT_iconSize)));
+            // TODO (not important) better format for colors in config file
+            infoColor = Integer.parseInt(cfg.getProperty("infoColor", String.valueOf(DEFAULT_infoColor)));
+            secondsToVanish = Long.parseLong(cfg.getProperty("secondsToVanish", String.valueOf(DEFAULT_secondsToVanish)));
+            highlightColor = Integer.parseInt(cfg.getProperty("highlightColor", String.valueOf(DEFAULT_highlightColor)));
+            soundIndex = (byte) Integer.parseInt(cfg.getProperty("soundIndex", String.valueOf(DEFAULT_soundIndex)));
 
             // Re-save so that new properties will appear in old config files
             saveConfig(file);
@@ -165,7 +171,12 @@ public class ModConfig implements ModMenuApi, ConfigScreenFactory<Screen> {
     public static void saveConfig(File file) {
         try {
             FileOutputStream fos = new FileOutputStream(file, false);
+            fos.write(("pingNumEach=" + pingNumEach + "\n").getBytes());
             fos.write(("includeFluids=" + includeFluids + "\n").getBytes());
+            fos.write(("iconSize=" + iconSize + "\n").getBytes());
+            fos.write(("infoColor=" + infoColor + "\n").getBytes());
+            fos.write(("secondsToVanish=" + secondsToVanish + "\n").getBytes());
+            fos.write(("highlightColor=" + highlightColor + "\n").getBytes());
             fos.write(("soundIndex=" + soundIndex + "\n").getBytes());
             fos.close();
         } catch (IOException e) {
