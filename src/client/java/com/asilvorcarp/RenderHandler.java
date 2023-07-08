@@ -304,7 +304,7 @@ public class RenderHandler implements IRenderer {
     }
 
     @NotNull
-    private static String humanReadableHotkey(KeyBinding keybinding) {
+    public static String humanReadableHotkey(KeyBinding keybinding) {
         var hotkeyPath = KeyBindingHelper.getBoundKeyOf(keybinding).toString().split("\\.");
         // enough for keyboard
         var hotkey = hotkeyPath[hotkeyPath.length - 1].toUpperCase();
