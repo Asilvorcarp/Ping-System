@@ -23,7 +23,7 @@ public class ModConfig implements ModMenuApi, ConfigScreenFactory<Screen> {
             FabricLoader.getInstance().getConfigDir().toFile(),
             MOD_ID + ".properties");
     // the num of pings save for each player (work only in client side)
-    public static int pingNumEach;
+    public static int pingNumEach = 3;
     // whether we can ping on the fluid
     public static boolean includeFluids = false;
     // resize the icon hud

@@ -52,12 +52,12 @@ dependencies {
     implementation "com.google.code.findbugs:jsr305:3.0.2"
     modImplementation "fi.dy.masa.malilib:malilib-fabric-${project.minecraft_version}:${project.malilib_version}"
     implementation "org.joml:joml:${jomlVersion}"
-    modApi "com.terraformersmc:modmenu:${project.modmenu_version}"
+    modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
 
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
 
-    modApi("me.shedaniel.cloth:cloth-config-fabric:${cloth_version}") {
+    modImplementation("me.shedaniel.cloth:cloth-config-fabric:${cloth_version}") {
         exclude(group: "net.fabricmc.fabric-api")
     }
 
