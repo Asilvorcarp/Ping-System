@@ -8,6 +8,7 @@ import fi.dy.masa.malilib.util.EntityUtils;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
@@ -297,15 +298,21 @@ public class RenderHandler implements IRenderer {
             textRenderer.drawWithShadow(ms, line, topLeftX, topLeftY, ModConfig.infoColor);
             topLeftY += textRenderer.fontHeight + 2;
         }
-        var hotkeyPath = KeyBindingHelper.getBoundKeyOf(pingKeyBinding).toString().split("\\.");
+        String hotkey = humanReadableHotkey(pingKeyBinding);
+        var keyIndicator = "Cancel (" + hotkey + ")";
+        textRenderer.drawWithShadow(ms, keyIndicator, topLeftX, topLeftY, 0xFFFFFFFF);
+    }
+
+    @NotNull
+    private static String humanReadableHotkey(KeyBinding keybinding) {
+        var hotkeyPath = KeyBindingHelper.getBoundKeyOf(keybinding).toString().split("\\.");
         // enough for keyboard
         var hotkey = hotkeyPath[hotkeyPath.length - 1].toUpperCase();
         // add "m" for mouse
         if (hotkeyPath.length == 3 && hotkeyPath[1].equals("mouse")) {
             hotkey = "M" + hotkey;
         }
-        var keyIndicator = "Cancel (" + hotkey + ")";
-        textRenderer.drawWithShadow(ms, keyIndicator, topLeftX, topLeftY, 0xFFFFFFFF);
+        return hotkey;
     }
 
     public void renderOverlays(MatrixStack matrixStack, net.minecraft.util.math.Matrix4f projMatrix,
