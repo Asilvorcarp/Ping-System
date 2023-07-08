@@ -31,7 +31,7 @@ import static com.asilvorcarp.NetworkingConstants.REMOVE_PING_PACKET;
 
 public class ApexMCClient implements ClientModInitializer {
     public static final double MAX_REACH = 512.0D;
-    private static KeyBinding pingKeyBinding;
+    public static KeyBinding pingKeyBinding;
 
     @Override
     public void onInitializeClient() {
@@ -40,7 +40,7 @@ public class ApexMCClient implements ClientModInitializer {
                 "key.apex_mc.ping", // The translation key of the keybinding's name
                 InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
                 GLFW.GLFW_KEY_C, // The keycode of the key
-                "category.apex_mc.apex" // The translation key of the keybinding's category.
+                "category.apex_mc.apex_mc" // The translation key of the keybinding's category.
         ));
 
         InitializationHandler.getInstance().registerInitializationHandler(new InitHandler());

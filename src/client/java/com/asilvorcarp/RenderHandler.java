@@ -5,6 +5,7 @@ import fi.dy.masa.malilib.interfaces.IRenderer;
 import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.Color4f;
 import fi.dy.masa.malilib.util.EntityUtils;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.*;
@@ -24,6 +25,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.asilvorcarp.ApexMC.LOGGER;
 import static com.asilvorcarp.ApexMC.Vec3dToVector3d;
+import static com.asilvorcarp.ApexMCClient.pingKeyBinding;
 
 public class RenderHandler implements IRenderer {
     public static final boolean DEBUG = false;
@@ -295,7 +297,9 @@ public class RenderHandler implements IRenderer {
             textRenderer.drawWithShadow(ms, line, topLeftX, topLeftY, ModConfig.infoColor);
             topLeftY += textRenderer.fontHeight + 2;
         }
-        var keyIndicator = "Cancel (Z)";
+        var hotkeyPath = KeyBindingHelper.getBoundKeyOf(pingKeyBinding).toString().split("\\.");
+        var hotkey = hotkeyPath[hotkeyPath.length - 1].toUpperCase();
+        var keyIndicator = "Cancel (" + hotkey + ")";
         textRenderer.drawWithShadow(ms, keyIndicator, topLeftX, topLeftY, 0xFFFFFFFF);
     }
 

@@ -22,25 +22,25 @@ public class ModConfig implements ModMenuApi, ConfigScreenFactory<Screen> {
     public static final File CFG_FILE = new File(
             FabricLoader.getInstance().getConfigDir().toFile(),
             MOD_ID + ".properties");
-    // the num of pings save for each player (work only in client side)
+    // The num of pings save for each player (work only in client side)
     public static final int DEFAULT_pingNumEach = 1;
     public static int pingNumEach = DEFAULT_pingNumEach;
-    // whether we can ping on the fluid
+    // Whether you can ping on the fluid
     public static final boolean DEFAULT_includeFluids = false;
     public static boolean includeFluids = DEFAULT_includeFluids;
-    // resize the icon hud
+    // Resize the icon hud
     public static final float DEFAULT_iconSize = 1f;
     public static float iconSize = DEFAULT_iconSize;
-    // info shown when looking at the ping point, format: 0xAARRGGBB
+    // Info shown when looking at the ping point, format: 0xAARRGGBB
     public static final int DEFAULT_infoColor = 0xFFEB9D39;
     public static int infoColor = DEFAULT_infoColor;
     // 0 means never, only work at your client side
     public static final long DEFAULT_secondsToVanish = 0;
     public static long secondsToVanish = DEFAULT_secondsToVanish;
-    // color of the highlight block, format: 0xAARRGGBB
+    // Color of the highlight block, format: 0xAARRGGBB
     public static final int DEFAULT_highlightColor = 0xFFEB9D39;
     public static int highlightColor = DEFAULT_highlightColor;
-    // the index of the ping sound
+    // The index of the ping sound
     public static final byte DEFAULT_soundIndex = 0;
     public static byte soundIndex = DEFAULT_soundIndex;
 

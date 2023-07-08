@@ -30,7 +30,7 @@ malilib: [https://www.curseforge.com/minecraft/mc-mods/malilib](https://www.curs
 
 ## Todo
 
-- [ ] config for mod with mod menu
+- [x] config for mod with mod menu
 - [ ] get current key for info
 - [ ] confirm ping of teammate
 - [ ] ping entity

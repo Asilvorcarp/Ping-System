@@ -1,0 +1,20 @@
+{
+  "category.apex_mc.apex_mc": "Apex MC",
+  "key.apex_mc.ping": "Ping",
+  "title.apex_mc.config": "ApexMC",
+  "config.apex_mc.general": "General",
+  "config.apex_mc.pingNumEach": "Ping Num Each Player",
+  "config.apex_mc.pingNumEach.description": "The num of pings save for each player (work only in client side)",
+  "config.apex_mc.includeFluids": "Include Fluids",
+  "config.apex_mc.includeFluids.description": "Whether you can ping on the fluid",
+  "config.apex_mc.iconSize": "Icon Size",
+  "config.apex_mc.iconSize.description": "Resize the icon hud",
+  "config.apex_mc.infoColor": "Info Color",
+  "config.apex_mc.infoColor.description": "Info shown when looking at the ping point, format: 0xAARRGGBB",
+  "config.apex_mc.secondsToVanish": "Seconds to Vanish",
+  "config.apex_mc.secondsToVanish.description": "How long does it take for the ping point to disappear.\n0 means never, only work at your client side",
+  "config.apex_mc.highlightColor": "Highlight Color",
+  "config.apex_mc.highlightColor.description": "Color of the highlight block, format: 0xAARRGGBB",
+  "config.apex_mc.soundIndex": "Sound Index",
+  "config.apex_mc.soundIndex.description": "The index of the ping sound:\n0: ping location\n1: ping enemy\n2: ping item\n3: mozambique lifeline\n4: block anvil break"
+}

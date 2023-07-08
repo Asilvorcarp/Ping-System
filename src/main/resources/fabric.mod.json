@@ -41,6 +41,7 @@
 		"another-mod": "*"
 	},
 	"recommends":{
+		"modmenu": "*",
 		"cloth-config": "*"
 	}
 }
