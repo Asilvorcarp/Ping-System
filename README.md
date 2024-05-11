@@ -4,7 +4,7 @@
 
 <h1 align="center">ApexMC</h1>
 
-Make MC Apex Again.
+Ping System for Minecraft. Make MC Apex Again!
 
 ## Ping System
 
