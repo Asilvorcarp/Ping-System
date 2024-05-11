@@ -2,7 +2,7 @@
     <img src="./src/main/resources/assets/apex_mc/icon.png" alt="ApexMC" width="200"/> 
 </p>
 
-<h1 align="center">ApexMC</h1>
+<h1 align="center">PingSystem</h1>
 
 Ping System for Minecraft. Make MC Apex Again!
 
